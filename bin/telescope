@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+docker_image_name="mdtp-telemetry/telescope-devkit:latest"
+docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
+
+get_source_dir() {
+     SOURCE="${BASH_SOURCE[0]}"
+     # While $SOURCE is a symlink, resolve it
+     while [ -h "$SOURCE" ]; do
+          DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+          SOURCE="$( readlink "$SOURCE" )"
+          # If $SOURCE was a relative symlink (so no "/" as prefix, need to resolve it relative to the symlink base directory
+          [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+     done
+     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+     echo "${DIR}/../"
+}
+
+git_update() {
+  cd "$(get_source_dir)" || return 1
+  main_branch="master"
+  active_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "${main_branch}" != "${active_branch}" ]; then
+    echo -e "\e[91mERROR: Unable to update as the Git repo is not on the '${main_branch}' branch. Current branch is '${active_branch}'.\e[0m"
+    return 1
+  fi
+  git pull
+  return $?
+}
+
+run_update() {
+  git_update || return 1
+  echo -e "Updating the Docker image..."
+  cd "$(get_source_dir)" && DOCKER_BUILDKIT=1 docker build . -t ${docker_image_name} || return $?
+  echo -e "...done."
+  echo -e "\e[94mtelescope-devkit\e[0m has been updated."
+}
+
+run_default() {
+  docker run ${docker_aws_env_vars} -t --rm ${docker_image_name} "$@"
+  return $?
+}
+
+run_default_dev() {
+  docker run ${docker_aws_env_vars} -t --rm -v "$(pwd)":/app ${docker_image_name} "$@"
+  return $?
+}
+
+if [ $# -ge 1 ]; then
+  case $1 in
+    "self-update")
+      run_update "$@"
+      exit $?
+      ;;
+  esac
+fi
+
+run_default_dev "$@"
+exit $?
