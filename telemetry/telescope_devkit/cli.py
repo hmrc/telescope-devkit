@@ -18,7 +18,7 @@ def display(lines: [], out) -> None:
 
 def cli(target, name):
     fire.core.Display = display
-    fire.Fire(target, name=name)
+    return fire.Fire(target, name=name)
 
 
 def get_console():

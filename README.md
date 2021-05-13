@@ -43,8 +43,10 @@ COMMANDS
      ec2
 
      logs
+     
+     elasticsearch
 
-     update
+     app-update
 ```
 
 ## Examples
@@ -72,8 +74,12 @@ Get list of EC2 of `clickhouse` instances in `internal-telemetry`:
 To update `telescope`:
 
 ```shell
-❯ telescope update
+❯ telescope app-update
 ```
+
+### Development mode
+
+If you are editing the source code
 
 ### License
 

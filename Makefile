@@ -13,18 +13,17 @@ help: ## The help text you're reading
 
 # Docker targets:
 
-docker-build: ## Build the Python3 Docker image
-	@echo "Building ${DOCKER_IMAGE_NAME}..."
-	@DOCKER_BUILDKIT=1 docker build . -t ${DOCKER_IMAGE_NAME}
-.PHONY: docker-build
+app-build: ## Build the telescope-devkit Docker image
+	@bin/telescope app-build
+.PHONY: app-build
 
-docker-run: ## Run the telescope-devkit application in a Python3 container
-	@docker run ${DOCKER_AWS_VARS} -v $(PWD):/app --rm ${DOCKER_IMAGE_NAME} -h
-.PHONY: docker-run
+app-update: ## Updates the local telescope-devkit git copy and re-builds the Docker image
+	@bin/telescope app-update
+.PHONY: app-update
 
-docker-sh: ## Get a shell in a Python3 container
-	@docker run ${DOCKER_AWS_VARS} -it -v $(PWD):/app --rm --entrypoint=/bin/bash ${DOCKER_IMAGE_NAME}
-.PHONY: sh-py35
+app-shell: ## Launch a shell in a telescope-devkit container
+	@bin/telescope app-shell
+.PHONY: app-shell
 
 # Poetry targets:
 
@@ -40,7 +39,7 @@ poetry-install: ## Install the dependencies as according to the pyproject.toml f
 	@poetry install
 .PHONY: poetry-install
 
-install: docker-build ## Build Docker image and install a `telescope` symlink in /usr/local/bin
+install: app-build ## Build Docker image and install a `telescope` symlink in /usr/local/bin
 	@echo -n "Installing symlink in /usr/local/bin/telescope ..."
-	@ln -sfn ${ROOT_DIR}/bin/telescope /usr/local/bin/telescope && echo " done."
+	@sudo ln -sfn ${ROOT_DIR}/bin/telescope /usr/local/bin/telescope && echo " done."
 .PHONY: install

@@ -2,6 +2,11 @@
 
 docker_image_name="mdtp-telemetry/telescope-devkit:latest"
 docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
+devmode=${TELESCOPE_DEVKIT_DEVMODE:-false}
+# shellcheck disable=SC2054
+default_bind_mounts=(--mount type=bind,source="${HOME}/.aws",target=/root/.aws,readonly --mount type=bind,source="${HOME}/.ssh",target=/root/.ssh)
+# shellcheck disable=SC2054
+dev_bind_mounts=(--mount type=bind,source="$(pwd)",target=/app)
 
 get_source_dir() {
      SOURCE="${BASH_SOURCE[0]}"
@@ -31,29 +36,51 @@ git_update() {
 run_update() {
   git_update || return 1
   echo -e "Updating the Docker image..."
-  cd "$(get_source_dir)" && DOCKER_BUILDKIT=1 docker build . -t ${docker_image_name} || return $?
+  run_docker_build || return $?
   echo -e "...done."
   echo -e "\e[94mtelescope-devkit\e[0m has been updated."
 }
 
-run_default() {
-  docker run ${docker_aws_env_vars} -t --rm ${docker_image_name} "$@"
+run_docker_build() {
+  cd "$(get_source_dir)" && DOCKER_BUILDKIT=1 docker build . -t ${docker_image_name} || return $?
+}
+
+run_docker_shell() {
+  if [ "true" = "${devmode}" ]; then
+    echo -e "\e[33mRunning in development mode.\e[0m"
+    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+  else
+    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+  fi
   return $?
 }
 
-run_default_dev() {
-  docker run ${docker_aws_env_vars} -t --rm -v "$(pwd)":/app ${docker_image_name} "$@"
+run_default() {
+  if [ "true" = "${devmode}" ]; then
+    echo -e "\e[33mRunning in development mode.\e[0m"
+    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
+  else
+    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" ${docker_image_name} "$@"
+  fi
   return $?
 }
 
 if [ $# -ge 1 ]; then
   case $1 in
-    "self-update")
-      run_update "$@"
+    "app-build")
+      run_docker_build
+      exit $?
+      ;;
+    "app-shell")
+      run_docker_shell
+      exit $?
+      ;;
+    "app-update")
+      run_update
       exit $?
       ;;
   esac
 fi
 
-run_default_dev "$@"
+run_default "$@"
 exit $?
