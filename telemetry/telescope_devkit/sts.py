@@ -3,12 +3,16 @@ import os
 
 import boto3
 
+from telemetry.telescope_devkit import APP_NAME
 from telemetry.telescope_devkit.filesystem import get_repo_path
 
 
 class Sts(object):
     def __init__(self):
-        self._sts = boto3.client('sts')
+        try:
+            self._sts = boto3.client('sts')
+        except ValueError as e:
+            raise Exception(f"{e}\nAre you running {APP_NAME} in an AWS profile?")
         self.aws_accounts = load_aws_accounts()
 
     @property
@@ -35,3 +39,5 @@ def load_aws_accounts() -> dict:
 
 
 
+def get_account_name() -> str:
+    return Sts().account_name
