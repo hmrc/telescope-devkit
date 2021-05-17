@@ -4,8 +4,8 @@ import os
 from git import Repo
 from telemetry.telescope_devkit.filesystem import get_repo_path
 
-GIT_DEFAULT_MAIN_BRANCH_NAME = 'main'
-GIT_DEFAULT_REMOTE_NAME = 'vitorbrandao'
+GIT_DEFAULT_MAIN_BRANCH_NAME = "main"
+GIT_DEFAULT_REMOTE_NAME = "vitorbrandao"
 
 
 class TelescopeDevkitGitRepo(object):
@@ -14,8 +14,8 @@ class TelescopeDevkitGitRepo(object):
         self.remote_name = GIT_DEFAULT_REMOTE_NAME
         if debug is True:
             logging.basicConfig(level=logging.DEBUG)
-            os.putenv('GIT_PYTHON_TRACE', '1')
-            os.environ['GIT_PYTHON_TRACE'] = '1'
+            os.putenv("GIT_PYTHON_TRACE", "1")
+            os.environ["GIT_PYTHON_TRACE"] = "1"
         self.repo = Repo(get_repo_path())
         assert not self.repo.bare
         assert os.path.isdir(self.repo.working_tree_dir)
@@ -30,14 +30,18 @@ class TelescopeDevkitGitRepo(object):
 
     def pull(self) -> None:
         if self.remote_name not in self.repo.remotes:
-            raise TelescopeDevkitGitRepoException(f"No remote named '{self.remote_name}' was found.")
+            raise TelescopeDevkitGitRepoException(
+                f"No remote named '{self.remote_name}' was found."
+            )
         remote = self.repo.remotes[self.remote_name]
         remote.pull()
 
     def update(self):
         if self.main_branch != self.repo.active_branch:
-            raise TelescopeDevkitGitRepoException(f"Unable to update as the Git repo is not on the " +
-                                                  f"'{self.main_branch}' branch. Current branch is '{self.repo.active_branch}'.")
+            raise TelescopeDevkitGitRepoException(
+                f"Unable to update as the Git repo is not on the "
+                + f"'{self.main_branch}' branch. Current branch is '{self.repo.active_branch}'."
+            )
         self.pull()
 
 

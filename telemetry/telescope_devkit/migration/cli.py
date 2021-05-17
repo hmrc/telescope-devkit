@@ -20,8 +20,10 @@ class MigrationChecklist(object):
         sts = Sts()
 
         table = Table(show_header=True, header_style="bold cyan")
-        table.add_column(f"  ❯   {title} ([bold]{sts.account_name}[/bold])", justify="left")
-        checks = {'pass': 0, 'fail': 0}
+        table.add_column(
+            f"  ❯   {title} ([bold]{sts.account_name}[/bold])", justify="left"
+        )
+        checks = {"pass": 0, "fail": 0}
         for c in self._checklist:
             self._console.print(f"\n[yellow]☐ Check: {c.description}[/yellow]")
             if c.requires_manual_intervention():
@@ -31,11 +33,11 @@ class MigrationChecklist(object):
             if c.is_successful():
                 check_status = "[green]✔[/green]"
                 self._console.print(f"{check_status} Pass")
-                checks['pass'] += 1
+                checks["pass"] += 1
             else:
                 check_status = "[red]x[/red]"
                 self._console.print(f"{check_status} Fail")
-                checks['fail'] += 1
+                checks["fail"] += 1
             table.add_row(f"[ {check_status} ] {c.description}")
 
         self._console.print("")
@@ -45,8 +47,10 @@ class MigrationChecklist(object):
         self._console.print(f"* Environment: [bold]{sts.account_name}[/bold]")
         now = datetime.now()
         self._console.print(f"* Checklist performed on { now.ctime()}")
-        self._console.print(f"* Checks: {checks['pass']} successful, {checks['fail']} failed.")
-        if checks['fail'] > 0:
+        self._console.print(
+            f"* Checks: {checks['pass']} successful, {checks['fail']} failed."
+        )
+        if checks["fail"] > 0:
             self._console.print("* Outcome: [red]Environment is not healthy.[/red]\n")
             return_code = 1
         else:
@@ -55,21 +59,22 @@ class MigrationChecklist(object):
 
         return return_code
 
+
 class Phase1Cli(MigrationChecklist):
     def __init__(self):
         self._checklist = [
-            TerraformBuild(),
-            EcsStatusChecks(),
+            # TerraformBuild(),
+            # EcsStatusChecks(),
             KafkaLogsConsumption(),
-            ElasticSearchIngest(),
+            # ElasticSearchIngest(),
             NwtPublicWebUis(),
-            WebopsPublicWebUis()
+            WebopsPublicWebUis(),
         ]
 
     def list(self):
         """Display Phase 1 checks"""
         self._list("Phase 1 checklist")
-    
+
     def check(self) -> int:
         """Execute Phase 1 checks"""
         return self._check("Phase 1 checklist")
@@ -83,7 +88,7 @@ class Phase2Cli(MigrationChecklist):
             KafkaLogsConsumption(),
             ElasticSearchIngest(),
             NwtPublicWebUis(),
-            WebopsPublicWebUis()
+            WebopsPublicWebUis(),
         ]
 
     def list(self):
@@ -103,7 +108,7 @@ class Phase3Cli(MigrationChecklist):
             KafkaLogsConsumption(),
             ElasticSearchIngest(),
             NwtPublicWebUis(),
-            WebopsPublicWebUis()
+            WebopsPublicWebUis(),
         ]
 
     def list(self):

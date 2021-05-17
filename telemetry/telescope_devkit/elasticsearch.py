@@ -15,7 +15,9 @@ class Comrade(object):
         self._ec2 = Ec2()
         self._sts = Sts()
         self._docker = DockerClient()
-        self._clusters_data_dir = os.path.join(get_repo_path(), "data/elasticsearch-comrade")
+        self._clusters_data_dir = os.path.join(
+            get_repo_path(), "data/elasticsearch-comrade"
+        )
         self._use_docker_py = False
 
     def run(self):
@@ -23,12 +25,15 @@ class Comrade(object):
         instance = self._ec2.get_instance_by_name(instance_name, enable_wildcard=False)
 
         if not instance:
-            self._console.print(f"[red]ERROR: No '{instance_name}' instances found in this account[/red]")
+            self._console.print(
+                f"[red]ERROR: No '{instance_name}' instances found in this account[/red]"
+            )
             return 1
 
-        ssh_server_ip_address = instance['PrivateIpAddress']
+        ssh_server_ip_address = instance["PrivateIpAddress"]
         with self._console.status(
-                f"[bold green]Setting up an SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}... ") as status:
+            f"[bold green]Setting up an SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}... "
+        ) as status:
             tunnel = LocalPortForwarding(ssh_server_ip_address, "elasticsearch", 9200)
             tunnel.start()
 
@@ -39,29 +44,35 @@ class Comrade(object):
 
         self._generate_cluster_config()
         self._console.print(
-            f"Launching the elasticsearch-comrade Docker container...\nPress [yellow]<ctrl-c>[/yellow] to stop it.")
+            f"Launching the elasticsearch-comrade Docker container...\nPress [yellow]<ctrl-c>[/yellow] to stop it."
+        )
         container = None
         try:
             if self._use_docker_py:
                 container = self._docker.run(
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
-                    volumes={self._clusters_data_dir: {'bind': '/app/comrade/clusters/', 'mode': 'rw'}},
-                    environment={'COMRADE_DEBUG': 'true'},
+                    volumes={
+                        self._clusters_data_dir: {
+                            "bind": "/app/comrade/clusters/",
+                            "mode": "rw",
+                        }
+                    },
+                    environment={"COMRADE_DEBUG": "true"},
                     tty=True,
                     auto_remove=True,
                     remove=True,
-                    detach=True
+                    detach=True,
                 )
                 while True:
                     for output in container.logs(stream=True):
-                        print(output.decode('utf-8'), end='')
+                        print(output.decode("utf-8"), end="")
             else:
                 self._docker.run_interactive_legacy(
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
-                    volumes={self._clusters_data_dir: '/app/comrade/clusters/'},
-                    environment={'COMRADE_DEBUG': 'true'}
+                    volumes={self._clusters_data_dir: "/app/comrade/clusters/"},
+                    environment={"COMRADE_DEBUG": "true"},
                 )
         except KeyboardInterrupt:
             if container:
@@ -73,7 +84,8 @@ class Comrade(object):
             self._console.print(f"Created directory '{self._clusters_data_dir}'")
 
         with self._console.status(
-                f"[bold green]Stopping SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}...") as status:
+            f"[bold green]Stopping SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}..."
+        ) as status:
             tunnel.stop()
 
     def _generate_cluster_config(self):
@@ -83,11 +95,11 @@ class Comrade(object):
             "params": {
                 "hosts": [f"{scheme}://host.docker.internal:9200"],
                 "ca_certs": False,
-                "verify_certs": False
-            }
+                "verify_certs": False,
+            },
         }
 
-        with open(os.path.join(self._clusters_data_dir, 'cluster.json'), 'w') as file:
+        with open(os.path.join(self._clusters_data_dir, "cluster.json"), "w") as file:
             json.dump(config, file, indent=4, sort_keys=True)
 
 

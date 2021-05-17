@@ -1,6 +1,9 @@
 from telemetry.telescope_devkit import APP_NAME
 from telemetry.telescope_devkit.cli import get_console
-from telemetry.telescope_devkit.git import TelescopeDevkitGitRepo, TelescopeDevkitGitRepoException
+from telemetry.telescope_devkit.git import (
+    TelescopeDevkitGitRepo,
+    TelescopeDevkitGitRepoException,
+)
 
 console = get_console()
 
@@ -8,7 +11,9 @@ console = get_console()
 class DevkitCli(object):
     @staticmethod
     def update(debug: bool = False) -> int:
-        console.print(f"Going to update [bold blue]{APP_NAME}[/bold blue] to the latest version available...")
+        console.print(
+            f"Going to update [bold blue]{APP_NAME}[/bold blue] to the latest version available..."
+        )
         try:
             repo = TelescopeDevkitGitRepo(debug=debug)
             console.print(f"Current version: [yellow]{repo.current_version}[/yellow]")

@@ -7,7 +7,14 @@ from telemetry.telescope_devkit.cli import get_console
 
 
 class LocalPortForwarding(object):
-    def __init__(self, ssh_server: str, destination_host: str, destination_port: int, local_host='localhost', local_port=None):
+    def __init__(
+        self,
+        ssh_server: str,
+        destination_host: str,
+        destination_port: int,
+        local_host="localhost",
+        local_port=None,
+    ):
         self.ssh_server = ssh_server
         self.destination_host = destination_host
         self.destination_port = destination_port
