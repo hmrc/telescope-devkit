@@ -42,11 +42,11 @@ COMMANDS
 
      ec2
 
-     logs
-     
      elasticsearch
 
-     app-update
+     logs
+
+     migration
 ```
 
 ## Examples
@@ -79,7 +79,22 @@ To update `telescope`:
 
 ### Development mode
 
-If you are editing the source code
+If you are editing the source code please set the following environment flag to avoid having to re-build your Docker container on every code change:
+
+```shell
+export TELESCOPE_DEVKIT_DEVMODE=true
+```
+
+With this environment variable set you will see the `Running in development mode` message every time you run `telescope-devkit`:
+
+You may also find running commands within the Docker container more efficient that launching a new container every time. Use `app-shell` to get a terminal in a Docker container.
+
+```shell
+❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope app-shell                                                                                                                                                                                                                           11:58:25
+Running in development mode.
+
+bin/telescope.py migration phase-1 check
+```
 
 ### License
 
