@@ -14,7 +14,7 @@ def create_app_logger(level: str = logging.DEBUG):
 
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setLevel(level)
-    formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
@@ -23,6 +23,7 @@ def create_app_logger(level: str = logging.DEBUG):
 
 def get_app_logger():
     return logging.getLogger(APP_NAME)
+
 
 def create_file_logger(filename: str, level: str = logging.DEBUG):
     level = level.upper() if isinstance(level, str) else level
@@ -35,7 +36,7 @@ def create_file_logger(filename: str, level: str = logging.DEBUG):
         os.mkdir(log_dir)
     file_handler = logging.FileHandler(os.path.join(log_dir, filename))
     file_handler.setLevel(level)
-    formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

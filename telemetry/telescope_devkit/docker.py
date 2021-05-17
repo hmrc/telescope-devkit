@@ -10,9 +10,13 @@ class DockerClient(object):
         assert self._client.ping() is True
 
     def run(self, image, command=None, stdout=True, stderr=True, remove=True, **kwargs):
-        return self._client.containers.run(image, command, stdout, stderr, remove, **kwargs)
+        return self._client.containers.run(
+            image, command, stdout, stderr, remove, **kwargs
+        )
 
-    def run_interactive_legacy(self, image, command=None, volumes=None, ports=None, environment=None):
+    def run_interactive_legacy(
+        self, image, command=None, volumes=None, ports=None, environment=None
+    ):
         cmd = f"docker run"
 
         if environment is not None:
