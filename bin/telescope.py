@@ -9,8 +9,8 @@ from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase2Cli, Phase
 
 commands = {
     'ec2': Ec2Cli,
-    'logs': LogsCli,
     'elasticsearch': ElasticsearchCli,
+    'logs': LogsCli,
     'migration' : {
         'phase-1': Phase1Cli,
         'phase-2': Phase2Cli,

@@ -9,7 +9,7 @@ import requests
 def create_migration_checklist_logger():
     account_name = Sts().account_name
     logger = create_file_logger(f"{account_name}-migration-checklist.log")
-    # get_console().print(f"* Checks activity is being logged to [blue]log/{account_name}-migration-checklist.log[/blue]")
+    get_console().print(f"* Check activity is being logged to [blue]log/{account_name}-migration-checklist.log[/blue]")
 
     return logger
 
@@ -25,9 +25,6 @@ class Check(object):
     _console = get_console()
     _sts = Sts()
     _logger = None
-
-    def __init__(self):
-        _logger = create_migration_checklist_logger()
 
     def check(self):
         pass

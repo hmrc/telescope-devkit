@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import tempfile
 
 from telemetry.telescope_devkit import APP_NAME
 from telemetry.telescope_devkit.filesystem import get_repo_path
