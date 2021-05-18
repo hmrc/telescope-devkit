@@ -1,16 +1,23 @@
+import json
+import shlex
+import subprocess
+
+import requests
 from rich.prompt import Prompt
 
 from telemetry.telescope_devkit.cli import get_console
+from telemetry.telescope_devkit.ec2 import Ec2
 from telemetry.telescope_devkit.logger import create_file_logger
 from telemetry.telescope_devkit.grafana import Grafana
 from telemetry.telescope_devkit.sts import Sts, get_account_name
-import requests
 
 
 def create_migration_checklist_logger():
     account_name = Sts().account_name
     logger = create_file_logger(f"{account_name}-migration-checklist.log")
-    get_console().print(f"* Check activity is being logged to [blue]log/{account_name}-migration-checklist.log[/blue]")
+    get_console().print(
+        f"* Check activity is being logged to [blue]log/{account_name}-migration-checklist.log[/blue]"
+    )
 
     return logger
 
@@ -75,6 +82,26 @@ class TerraformBuild(Check):
 
 class EcsStatusChecks(Check):
     _description = "ECS Status Checks are green"
+
+    def check(self):
+        ec2 = Ec2()
+        instance = ec2.get_instance_by_name(name="telemetry", enable_wildcard=False)
+        # get the ecs status check result
+        cmd = f"ssh {instance['PrivateIpAddress']} curl http://ecs-status-checks.telemetry.internal:5000/test -s -o /dev/null -I -w \"%{{http_code}}\""
+        completed_process = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE)
+        return_code = completed_process.stdout.decode("utf-8")
+        if return_code == "200":
+            self._is_successful = True
+            return
+
+        self._is_successful = False
+        # return to the user the details ecs status check results
+        self.logger.debug(f"ECS Status Checks returned status code {return_code}")
+        self.logger.debug("detailed result of ecs-status-checks:")
+        cmd = f"ssh {instance['PrivateIpAddress']} curl http://ecs-status-checks.telemetry.internal:5000 -s"
+        completed_process = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE)
+        response = json.loads(completed_process.stdout)
+        self.logger.debug(json.dumps(response, indent=4))
 
 
 class KafkaLogsConsumption(Check):

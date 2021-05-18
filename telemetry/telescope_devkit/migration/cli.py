@@ -64,7 +64,7 @@ class Phase1Cli(MigrationChecklist):
     def __init__(self):
         self._checklist = [
             # TerraformBuild(),
-            # EcsStatusChecks(),
+            EcsStatusChecks(),
             KafkaLogsConsumption(),
             # ElasticSearchIngest(),
             NwtPublicWebUis(),

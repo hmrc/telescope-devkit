@@ -23,3 +23,4 @@ yarn-error.log
 /data/elasticsearch-comrade/cluster.json
 /dist
 *.pyc
+*.egg-info/
