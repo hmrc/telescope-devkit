@@ -63,10 +63,10 @@ class MigrationChecklist(object):
 class Phase1Cli(MigrationChecklist):
     def __init__(self):
         self._checklist = [
-            # TerraformBuild(),
+            TerraformBuild(),
             EcsStatusChecks(),
-            KafkaLogsConsumption(),
-            # ElasticSearchIngest(),
+            KafkaConsumption(),
+            ElasticSearchIngest(),
             NwtPublicWebUis(),
             WebopsPublicWebUis(),
         ]
@@ -85,7 +85,7 @@ class Phase2Cli(MigrationChecklist):
         self._checklist = [
             TerraformBuild(),
             EcsStatusChecks(),
-            KafkaLogsConsumption(),
+            KafkaConsumption(),
             ElasticSearchIngest(),
             NwtPublicWebUis(),
             WebopsPublicWebUis(),
@@ -105,7 +105,7 @@ class Phase3Cli(MigrationChecklist):
         self._checklist = [
             TerraformBuild(),
             EcsStatusChecks(),
-            KafkaLogsConsumption(),
+            KafkaConsumption(),
             ElasticSearchIngest(),
             NwtPublicWebUis(),
             WebopsPublicWebUis(),
