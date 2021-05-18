@@ -25,10 +25,10 @@ def get_app_logger():
     return logging.getLogger(APP_NAME)
 
 
-def create_file_logger(filename: str, level: str = logging.DEBUG):
+def create_file_logger(name: str, filename: str, level: str = logging.DEBUG):
     level = level.upper() if isinstance(level, str) else level
 
-    logger = logging.getLogger(filename)
+    logger = logging.getLogger(name)
     logger.setLevel(level)
 
     log_dir = os.path.join(get_repo_path(), "log")
@@ -41,3 +41,7 @@ def create_file_logger(filename: str, level: str = logging.DEBUG):
     logger.addHandler(file_handler)
 
     return logger
+
+
+def get_file_logger(name: str):
+    return logging.getLogger(name)

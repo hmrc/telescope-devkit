@@ -1,4 +1,5 @@
 import json
+import logging
 import shlex
 import subprocess
 
@@ -8,19 +9,24 @@ from rich.prompt import Prompt
 
 from telemetry.telescope_devkit.cli import get_console
 from telemetry.telescope_devkit.ec2 import Ec2
-from telemetry.telescope_devkit.logger import create_file_logger
+from telemetry.telescope_devkit.logger import create_file_logger, get_file_logger
 from telemetry.telescope_devkit.grafana import Grafana
 from telemetry.telescope_devkit.sts import Sts, get_account_name
 
 
 def create_migration_checklist_logger():
     account_name = Sts().account_name
-    logger = create_file_logger(f"{account_name}-migration-checklist.log")
+    filename = f"{account_name}-migration-checklist.log"
+    file_logger = create_file_logger(name="migration", filename=filename)
     get_console().print(
         f"* Check activity is being logged to [blue]log/{account_name}-migration-checklist.log[/blue]"
     )
 
-    return logger
+    return file_logger
+
+
+def get_migration_checklist_logger():
+    return get_file_logger("migration")
 
 
 class NotImplementedException(Exception):
@@ -32,7 +38,7 @@ class Check(object):
     _is_successful = None
     _requires_manual_intervention = False
     _console = get_console()
-    _sts = Sts()
+    _sts = None
     _logger = None
 
     def check(self):
@@ -62,8 +68,14 @@ class Check(object):
     @property
     def logger(self):
         if self._logger is None:
-            self._logger = create_migration_checklist_logger()
+            self._logger = get_migration_checklist_logger()
         return self._logger
+
+    @property
+    def sts(self):
+        if self._sts is None:
+            self._sts = Sts()
+        return self._sts
 
 
 class TerraformBuild(Check):
@@ -85,7 +97,7 @@ class EcsStatusChecks(Check):
     _description = "ECS Status Checks are green"
 
     def check(self):
-        self.logger.info(self._description)
+        self.logger.info(f"Check: {self._description}")
 
         ec2 = Ec2()
         instance = ec2.get_instance_by_name(name="telemetry", enable_wildcard=False)
@@ -118,11 +130,11 @@ class KafkaConsumption(Check):
     _description = "Kafka consumption looks correct"
 
     def check(self):
-        self.logger.info(self._description)
+        self.logger.info(f"Check: {self._description}")
 
         try:
             grafana = Grafana(
-                hostname=f"grafana.{self._sts.account_name}.telemetry.tax.service.gov.uk"
+                hostname=f"grafana.{self.sts.account_name}.telemetry.tax.service.gov.uk"
             )
         except ClientError as e:
             self.logger.debug(e)
@@ -149,9 +161,10 @@ class KafkaConsumption(Check):
         for msk_consumer_group in msk_consumer_groups:
             metric_query = f"alias(offset(scale(keepLastValue(divideSeries(telemetry.telescope.msk.{msk_consumer_group}.sum-lag%2Ctelemetry.telescope.msk.{msk_consumer_group}.sum-range)%2C%2060)%2C%20-100)%2C%20100)%2C%20'Offset')&from=-{msk_log_retention_period}&until=now&format=json&maxDataPoints=1"
             data = grafana.get_metric_value(metric_query=metric_query)
-            if int(data[0]["datapoints"][0][0]) < lag_threshold:
+            currentness_percentage = round(data[0]["datapoints"][0][0], 2)
+            if currentness_percentage < lag_threshold:
                 self.logger.debug(
-                    f"consumer group {msk_consumer_group} has an up-to-dateness of {data[0]['datapoints'][0][0]} which is less than the threshold of {lag_threshold}"
+                    f"consumer group {msk_consumer_group} has an up-to-dateness of {currentness_percentage}% which is less than the threshold of {lag_threshold}%"
                 )
                 self._is_successful = False
                 return
@@ -165,7 +178,7 @@ class ElasticSearchIngest(Check):
     _rate_diff_threshold = 10  # percentage difference
 
     def _get_indexing_rate_from_webops(self):
-        account_name = str(self._sts.account_name).replace("mdtp-", "")
+        account_name = str(self.sts.account_name).replace("mdtp-", "")
         grafana = Grafana(
             hostname=f"grafana.tools.{account_name}.tax.service.gov.uk",
             ssm_path="/telemetry/secrets/grafana/webops_migration_api_key",
@@ -175,7 +188,7 @@ class ElasticSearchIngest(Check):
         return round(float(data[0]["datapoints"][0][0]), 2)
 
     def _get_indexing_rate_from_tnt(self):
-        account_name = str(self._sts.account_name).replace("mdtp-", "")
+        account_name = str(self.sts.account_name).replace("mdtp-", "")
         grafana = Grafana(
             hostname="grafana.internal-telemetry.telemetry.tax.service.gov.uk",
             ssm_path="/telemetry/secrets/grafana/tnt_migration_api_key",
@@ -193,6 +206,8 @@ class ElasticSearchIngest(Check):
         return round(float(data[0]["datapoints"][0][0]), 2)
 
     def check(self):
+        self.logger.info(f"Check: {self._description}")
+
         try:
             webops_indexing_rate = self._get_indexing_rate_from_webops()
             tnt_indexing_rate = self._get_indexing_rate_from_tnt()
@@ -224,10 +239,10 @@ class NwtPublicWebUis(Check):
     )
 
     def check(self):
-        self.logger.debug(f"Check: {self._description}")
+        self.logger.info(f"Check: {self._description}")
         urls = {
-            f"https://kibana.{self._sts.account_name}.telemetry.tax.service.gov.uk": 200,
-            f"https://grafana.{self._sts.account_name}.telemetry.tax.service.gov.uk": 200,
+            f"https://kibana.{self.sts.account_name}.telemetry.tax.service.gov.uk": 200,
+            f"https://grafana.{self.sts.account_name}.telemetry.tax.service.gov.uk": 200,
         }
 
         try:
@@ -251,9 +266,9 @@ class WebopsPublicWebUis(Check):
     _description = "I can load the Webops Kibana and Grafana Web UIs via the Webops tools proxy public DNS"
 
     def check(self):
-        self._sts = Sts()
+        self.logger.info(f"Check: {self._description}")
 
-        account_name = str(self._sts.account_name)
+        account_name = str(self.sts.account_name)
         starts_with_mdtp = account_name.startswith("mdtp-")
 
         if starts_with_mdtp is True:
