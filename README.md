@@ -69,6 +69,62 @@ Get list of EC2 of `clickhouse` instances in `internal-telemetry`:
 └───────────────────────────┴─────────────────────┴───────────────┴───────────────────┴─────────────────────┴────────────────────┘
 ```
 
+### Migration Checklist
+
+This repo provides a checklist comprised of automated and interactive checks for the migration from Webops to the NWT environments.
+
+For each migration phase you can run the checks by using the corresponding AWS profile and invoking the `migration <phase-name> check` command:
+
+```shell
+❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration phase-1 check
+```
+A report will be published at the end which you can screenshot and attach to a JIRA ticket or Confluence page. Example:
+```shell
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   ❯   Phase 1 checklist (mdtp-staging)                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ [ x ] Terraform Build job is green                                                           │
+│ [ x ] ECS Status Checks are green                                                            │
+│ [ x ] Kafka consumption looks correct                                                        │
+│ [ x ] Data is being ingested into NWT elasticsearch effectively                              │
+│ [ ✔ ] I can load the Kibana and Grafana NWT Web UIs via the NWT public DNS                   │
+│ [ ✔ ] I can load the Webops Kibana and Grafana Web UIs via the Webops tools proxy public DNS │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Status report:
+* Environment: mdtp-staging
+* Checklist performed on Tue May 18 16:46:14 2021
+* Checks: 2 successful, 4 failed.
+* Outcome: Environment is not healthy.
+```
+
+
+
+You can list the available migration phases with:
+```shell
+❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration                                                                                                                                                                                        16:41:41
+
+NAME
+    telescope migration
+
+SYNOPSIS
+    telescope migration COMMAND
+
+COMMANDS
+    COMMAND is one of the following:
+
+     phase-1
+
+     phase-2-pre-cutover
+
+     phase-2-post-cutover
+
+     phase-3
+
+```
+
+
+
 ### Update telescope
 
 To update `telescope`:
