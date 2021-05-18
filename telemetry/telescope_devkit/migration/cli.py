@@ -86,16 +86,6 @@ class Phase1Cli(MigrationChecklist):
 
 class Phase2PreCutoverCli(MigrationChecklist):
     def __init__(self):
-        """
-        Terraform build job is green
-        ECS Status Checks are green
-        I can load the NWT Kibana and Grafana Web UIs via the new NWT public DNS
-        I can load the webops Kibana and Grafana Web UIs via the webops tools proxy public DNS
-        Logs data in NWT is valid
-        Metrics data in NWT is valid
-        Relevant alerts are still running in webops
-        Initial NWT alert(s) is running in NWT
-        """
         super().__init__()
         self._checklist = [
             TerraformBuild(),
@@ -121,11 +111,6 @@ class Phase2PreCutoverCli(MigrationChecklist):
 
 class Phase2PostCutoverCli(MigrationChecklist):
     def __init__(self):
-        """
-        I am successfully redirected to NWT Kibana & Grafana when hitting the webops tools URLs
-        Relevant alerts are still running in webops
-        Relevant alerts are now running in NWT
-        """
         super().__init__()
         self._checklist = [
             NwtPublicWebUisRedirectFromWebops(),
@@ -143,18 +128,6 @@ class Phase2PostCutoverCli(MigrationChecklist):
 
 
 class Phase3Cli(MigrationChecklist):
-    """
-    The following are no longer running in webops:
-     - Clickhouse
-     - Elasticsearch
-     - Kibana
-     - Grafana
-
-    Also:
-     - Relevant alerts are still running in webops
-     - Relevant alerts are still running in NWT
-    """
-
     def __init__(self):
         super().__init__()
         self._checklist = [
