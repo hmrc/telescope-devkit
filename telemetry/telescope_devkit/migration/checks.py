@@ -282,3 +282,59 @@ class WebopsPublicWebUis(Check):
             self.logger.debug(e)
             self._is_successful = False
             return
+
+
+class LogsDataIsValid(Check):
+    _description = "Logs data in NWT is valid"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class MetricsDataIsValid(Check):
+    _description = "Metrics data in NWT is valid"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class RelevantAlertsAreRunningInWebops(Check):
+    _description = "Relevant alerts are still running in webops"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class InitialAlertsAreRunningInNwt(Check):
+    _description = "Initial NWT alert(s) is running in NWT"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class NwtPublicWebUisRedirectFromWebops(Check):
+    _description = "I am successfully redirected to NWT Kibana & Grafana when hitting the webops tools URLs"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class RelevantAlertsAreRunningInNwt(Check):
+    _description = "Relevant alerts are now running in NWT"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
+class WebopsPublicWebUisNotRunning(Check):
+    _description = "The following are no longer running in webops: Clickhouse, Elasticsearch, Kibana, Grafana"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
