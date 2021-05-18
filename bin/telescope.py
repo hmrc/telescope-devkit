@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from os.path import isdir
+import shutil
 import sys
 
 from telemetry.telescope_devkit.cli import cli, get_console
@@ -18,8 +20,21 @@ commands = {
     }
 }
 
+
+def is_running_in_docker() -> bool:
+    with open('/proc/1/cgroup', 'rt') as ifh:
+        return 'docker' in ifh.read()
+
+
+def setup_ssh_config():
+    if not isdir("/root/.ssh"):
+        shutil.copytree("/root/.ssh_host", "/root/.ssh")
+
+
 if __name__ == '__main__':
     try:
+        if is_running_in_docker():
+            setup_ssh_config()
         exit_code = cli(commands, name='telescope')
         if isinstance(exit_code, int):
             sys.exit(exit_code)
