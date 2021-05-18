@@ -9,6 +9,9 @@ class MigrationChecklist(object):
     _checklist = []
     _console = get_console()
 
+    def __init__(self):
+        create_migration_checklist_logger()
+
     def _list(self, title: str) -> None:
         table = Table(show_header=True, header_style="bold cyan")
         table.add_column("❯  " + title, justify="left")
@@ -62,6 +65,7 @@ class MigrationChecklist(object):
 
 class Phase1Cli(MigrationChecklist):
     def __init__(self):
+        super().__init__()
         self._checklist = [
             TerraformBuild(),
             EcsStatusChecks(),
@@ -92,6 +96,7 @@ class Phase2PreCutoverCli(MigrationChecklist):
         Relevant alerts are still running in webops
         Initial NWT alert(s) is running in NWT
         """
+        super().__init__()
         self._checklist = [
             TerraformBuild(),
             EcsStatusChecks(),
@@ -121,6 +126,7 @@ class Phase2PostCutoverCli(MigrationChecklist):
         Relevant alerts are still running in webops
         Relevant alerts are now running in NWT
         """
+        super().__init__()
         self._checklist = [
             NwtPublicWebUisRedirectFromWebops(),
             RelevantAlertsAreRunningInWebops(),
@@ -150,6 +156,7 @@ class Phase3Cli(MigrationChecklist):
     """
 
     def __init__(self):
+        super().__init__()
         self._checklist = [
             WebopsPublicWebUisNotRunning(),
             RelevantAlertsAreRunningInWebops(),
