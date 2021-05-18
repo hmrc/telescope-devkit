@@ -3,6 +3,7 @@ import shlex
 import subprocess
 
 import requests
+from botocore.exceptions import ClientError
 from rich.prompt import Prompt
 
 from telemetry.telescope_devkit.cli import get_console
@@ -84,8 +85,17 @@ class EcsStatusChecks(Check):
     _description = "ECS Status Checks are green"
 
     def check(self):
+        self.logger.info(self._description)
+
         ec2 = Ec2()
         instance = ec2.get_instance_by_name(name="telemetry", enable_wildcard=False)
+        if not instance:
+            self.logger.debug(
+                "There are no ECS telemetry running instances in this environment"
+            )
+            self._is_successful = False
+            return
+
         # get the ecs status check result
         cmd = f"ssh {instance['PrivateIpAddress']} curl http://ecs-status-checks.telemetry.internal:5000/test -s -o /dev/null -I -w \"%{{http_code}}\""
         completed_process = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE)
@@ -108,9 +118,16 @@ class KafkaConsumption(Check):
     _description = "Kafka consumption looks correct"
 
     def check(self):
-        grafana = Grafana(
-            hostname=f"grafana.{self._sts.account_name}.telemetry.tax.service.gov.uk"
-        )
+        self.logger.info(self._description)
+
+        try:
+            grafana = Grafana(
+                hostname=f"grafana.{self._sts.account_name}.telemetry.tax.service.gov.uk"
+            )
+        except ClientError as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
 
         # Validate that all partitions have an offset greater than 0
         self.logger.debug("Validate that all partitions have an offset greater than 0")
@@ -151,7 +168,7 @@ class ElasticSearchIngest(Check):
         account_name = str(self._sts.account_name).replace("mdtp-", "")
         grafana = Grafana(
             hostname=f"grafana.tools.{account_name}.tax.service.gov.uk",
-            ssm_path="/telemetry/secrets/grafana/webops_migration_api_key"
+            ssm_path="/telemetry/secrets/grafana/webops_migration_api_key",
         )
         metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
         data = grafana.get_metric_value(metric_query=metric_query)
@@ -161,12 +178,14 @@ class ElasticSearchIngest(Check):
         account_name = str(self._sts.account_name).replace("mdtp-", "")
         grafana = Grafana(
             hostname="grafana.internal-telemetry.telemetry.tax.service.gov.uk",
-            ssm_path="/telemetry/secrets/grafana/tnt_migration_api_key"
+            ssm_path="/telemetry/secrets/grafana/tnt_migration_api_key",
         )
         # get environment cidr A&B
         ec2 = Ec2()
-        instance = ec2.get_instance_by_name(name="elasticsearch-query", enable_wildcard=False)
-        ip_blocks = instance['PrivateIpAddress'].split(".")
+        instance = ec2.get_instance_by_name(
+            name="elasticsearch-query", enable_wildcard=False
+        )
+        ip_blocks = instance["PrivateIpAddress"].split(".")
         ip_filter = f"ip-{ip_blocks[0]}-{ip_blocks[1]}-"
 
         metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*{ip_filter}*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
@@ -174,18 +193,30 @@ class ElasticSearchIngest(Check):
         return round(float(data[0]["datapoints"][0][0]), 2)
 
     def check(self):
-        webops_indexing_rate = self._get_indexing_rate_from_webops()
-        tnt_indexing_rate = self._get_indexing_rate_from_tnt()
+        try:
+            webops_indexing_rate = self._get_indexing_rate_from_webops()
+            tnt_indexing_rate = self._get_indexing_rate_from_tnt()
+        except ClientError as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
 
-        rate_difference = round((abs(webops_indexing_rate-tnt_indexing_rate)/webops_indexing_rate)*100, 2)
+        rate_difference = round(
+            (abs(webops_indexing_rate - tnt_indexing_rate) / webops_indexing_rate)
+            * 100,
+            2,
+        )
         if rate_difference < self._rate_diff_threshold:
             self._is_successful = True
         else:
-            self.logger.debug("The difference between elasticsearch ingest in webops compared to NWT is above threshold")
+            self.logger.debug(
+                "The difference between elasticsearch ingest in webops compared to NWT is above threshold"
+            )
             self.logger.debug(f"Indexing rate in webops is {webops_indexing_rate}")
             self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
             self.logger.debug(f"Indexing rate difference is {rate_difference}%")
             self._is_successful = False
+
 
 class NwtPublicWebUis(Check):
     _description = (
