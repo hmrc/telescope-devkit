@@ -104,8 +104,8 @@ class EcsStatusChecks(Check):
         self.logger.debug(json.dumps(response, indent=4))
 
 
-class KafkaLogsConsumption(Check):
-    _description = "Kafka logs consumption looks correct"
+class KafkaConsumption(Check):
+    _description = "Kafka consumption looks correct"
 
     def check(self):
         grafana = Grafana(
@@ -128,7 +128,7 @@ class KafkaLogsConsumption(Check):
         # Validate that all consumers are up to date
         msk_consumer_groups = ["metrics", "logs"]
         msk_log_retention_period = "1h"
-        lag_threshold = 30
+        lag_threshold = 90
         for msk_consumer_group in msk_consumer_groups:
             metric_query = f"alias(offset(scale(keepLastValue(divideSeries(telemetry.telescope.msk.{msk_consumer_group}.sum-lag%2Ctelemetry.telescope.msk.{msk_consumer_group}.sum-range)%2C%2060)%2C%20-100)%2C%20100)%2C%20'Offset')&from=-{msk_log_retention_period}&until=now&format=json&maxDataPoints=1"
             data = grafana.get_metric_value(metric_query=metric_query)
@@ -144,10 +144,48 @@ class KafkaLogsConsumption(Check):
 
 class ElasticSearchIngest(Check):
     _description = "Data is being ingested into NWT elasticsearch effectively"
+    _indexing_rate_period = "15min"
+    _rate_diff_threshold = 10  # percentage difference
+
+    def _get_indexing_rate_from_webops(self):
+        account_name = str(self._sts.account_name).replace("mdtp-", "")
+        grafana = Grafana(
+            hostname=f"grafana.tools.{account_name}.tax.service.gov.uk",
+            ssm_path="/telemetry/secrets/grafana/webops_migration_api_key"
+        )
+        metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
+        data = grafana.get_metric_value(metric_query=metric_query)
+        return round(float(data[0]["datapoints"][0][0]), 2)
+
+    def _get_indexing_rate_from_tnt(self):
+        account_name = str(self._sts.account_name).replace("mdtp-", "")
+        grafana = Grafana(
+            hostname="grafana.internal-telemetry.telemetry.tax.service.gov.uk",
+            ssm_path="/telemetry/secrets/grafana/tnt_migration_api_key"
+        )
+        # get environment cidr A&B
+        ec2 = Ec2()
+        instance = ec2.get_instance_by_name(name="elasticsearch-query", enable_wildcard=False)
+        ip_blocks = instance['PrivateIpAddress'].split(".")
+        ip_filter = f"ip-{ip_blocks[0]}-{ip_blocks[1]}-"
+
+        metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*{ip_filter}*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
+        data = grafana.get_metric_value(metric_query=metric_query)
+        return round(float(data[0]["datapoints"][0][0]), 2)
 
     def check(self):
-        pass
+        webops_indexing_rate = self._get_indexing_rate_from_webops()
+        tnt_indexing_rate = self._get_indexing_rate_from_tnt()
 
+        rate_difference = round((abs(webops_indexing_rate-tnt_indexing_rate)/webops_indexing_rate)*100, 2)
+        if rate_difference < self._rate_diff_threshold:
+            self._is_successful = True
+        else:
+            self.logger.debug("The difference between elasticsearch ingest in webops compared to NWT is above threshold")
+            self.logger.debug(f"Indexing rate in webops is {webops_indexing_rate}")
+            self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
+            self.logger.debug(f"Indexing rate difference is {rate_difference}%")
+            self._is_successful = False
 
 class NwtPublicWebUis(Check):
     _description = (

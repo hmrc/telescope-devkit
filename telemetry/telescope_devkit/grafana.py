@@ -7,9 +7,9 @@ import requests
 
 class Grafana:
     def __init__(
-        self, hostname: str = "localhost", port: int = 443, scheme: str = "https"
+        self, hostname: str = "localhost", port: int = 443, scheme: str = "https", ssm_path: str = "/telemetry/secrets/grafana/migration_api_key"
     ):
-        api_key = self._get_api_key()
+        api_key = self._get_api_key(ssm_path)
         self.default_headers = {
             "Authorization": f"Bearer {api_key}",
             "Accept": "application/json",
@@ -54,7 +54,7 @@ class Grafana:
     def get_metric_value(self, metric_query: str) -> List:
         datasource_id = self._get_datasource_id("carbonapi-clickhouse")
 
-        url = f"{self.base_url}/api/datasources/proxy/{datasource_id}/render"
+        url = f"{self.base_url}/api/datasources/proxy/{datasource_id}/render?format=json"
         headers = self.default_headers
         headers["Content-Type"] = "application/x-www-form-urlencoded"
         data = f"target={metric_query}"
@@ -63,7 +63,7 @@ class Grafana:
 
         if response.status_code != 200:
             raise Exception(
-                f"ERROR! has_metric received unexpected response code {response.status_code}, response: {response.content}"
+                f"ERROR! get_metric_value received unexpected response code {response.status_code}, response: {response.content}"
             )
 
         return response.json()
@@ -81,10 +81,10 @@ class Grafana:
 
         return response.json()["id"]
 
-    def _get_api_key(self) -> str:
+    def _get_api_key(self, ssm_path: str) -> str:
         ssm = boto3.client("ssm")
         parameter = ssm.get_parameter(
-            Name="/telemetry/secrets/grafana/migration_api_key", WithDecryption=True
+            Name=ssm_path, WithDecryption=True
         )
         api_key = parameter["Parameter"]["Value"]
 
