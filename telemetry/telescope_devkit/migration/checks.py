@@ -2,6 +2,7 @@ import json
 import logging
 import shlex
 import subprocess
+from json.decoder import JSONDecodeError
 
 import requests
 from botocore.exceptions import ClientError
@@ -109,7 +110,7 @@ class EcsStatusChecks(Check):
             return
 
         # get the ecs status check result
-        cmd = f"ssh {instance['PrivateIpAddress']} curl http://ecs-status-checks.telemetry.internal:5000/test -s -o /dev/null -I -w \"%{{http_code}}\""
+        cmd = f'ssh {instance.private_ip_address} curl http://ecs-status-checks.telemetry.internal:5000/test -s -o /dev/null -I -w "%{{http_code}}"'
         completed_process = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE)
         return_code = completed_process.stdout.decode("utf-8")
         if return_code == "200":
@@ -120,10 +121,13 @@ class EcsStatusChecks(Check):
         # return to the user the details ecs status check results
         self.logger.debug(f"ECS Status Checks returned status code {return_code}")
         self.logger.debug("detailed result of ecs-status-checks:")
-        cmd = f"ssh {instance['PrivateIpAddress']} curl http://ecs-status-checks.telemetry.internal:5000 -s"
+        cmd = f"ssh {instance.private_ip_address} curl http://ecs-status-checks.telemetry.internal:5000 -s"
         completed_process = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE)
-        response = json.loads(completed_process.stdout)
-        self.logger.debug(json.dumps(response, indent=4))
+        try:
+            response = json.loads(completed_process.stdout)
+            self.logger.debug(json.dumps(response, indent=4))
+        except JSONDecodeError as e:
+            self.logger.debug(e)
 
 
 class KafkaConsumption(Check):
@@ -144,7 +148,12 @@ class KafkaConsumption(Check):
         # Validate that all partitions have an offset greater than 0
         self.logger.debug("Validate that all partitions have an offset greater than 0")
         metric_query = "aliasByNode(telemetry.telescope.msk.metrics.*.offset%2C%204)&from=-5min&until=now&format=json&maxDataPoints=1"
-        data = grafana.get_metric_value(metric_query=metric_query)
+        try:
+            data = grafana.get_metric_value(metric_query=metric_query)
+        except Exception as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
 
         for partition in data:
             if int(partition["datapoints"][0][0]) < 0:
@@ -198,7 +207,7 @@ class ElasticSearchIngest(Check):
         instance = ec2.get_instance_by_name(
             name="elasticsearch-query", enable_wildcard=False
         )
-        ip_blocks = instance["PrivateIpAddress"].split(".")
+        ip_blocks = instance.private_ip_address.split(".")
         ip_filter = f"ip-{ip_blocks[0]}-{ip_blocks[1]}-"
 
         metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*{ip_filter}*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"

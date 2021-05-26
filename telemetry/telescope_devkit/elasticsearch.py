@@ -30,7 +30,7 @@ class Comrade(object):
             )
             return 1
 
-        ssh_server_ip_address = instance["PrivateIpAddress"]
+        ssh_server_ip_address = instance.private_ip_address
         with self._console.status(
             f"[bold green]Setting up an SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}... "
         ) as status:
