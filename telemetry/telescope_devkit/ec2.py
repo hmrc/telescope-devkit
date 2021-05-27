@@ -1,4 +1,7 @@
+from typing import Union
+
 import boto3
+from mypy_boto3_ec2.service_resource import ServiceResourceInstancesCollection, Instance
 
 from rich.table import Table
 
@@ -8,28 +11,29 @@ from telemetry.telescope_devkit.ssh import ssh_to, LocalPortForwarding
 
 class Ec2(object):
     def __init__(self):
-        self._ec2_client = boto3.client("ec2")
+        """
+        See https://boto3.amazonaws.com/v1/documentation/api/1.17.74/reference/services/ec2.html#EC2.ServiceResource.instances
+        """
+        self._ec2_resource_service_client = boto3.resource("ec2")
 
-    def get_instances_by_name(self, name: str, enable_wildcard: bool = True):
+    def get_instances_by_name(
+        self, name: str, enable_wildcard: bool = True
+    ) -> ServiceResourceInstancesCollection:
         if enable_wildcard:
             name = "*" + name + "*"
 
-        response = self._ec2_client.describe_instances(
+        return self._ec2_resource_service_client.instances.filter(
             Filters=[
                 {"Name": "tag:Name", "Values": [name]},
                 {"Name": "instance-state-name", "Values": ["running"]},
-            ],
-            MaxResults=1000,
+            ]
         )
 
-        instances = []
-        for r in response["Reservations"]:
-            instances.extend(r["Instances"])
-
-        return instances
-
-    def get_instance_by_name(self, name: str, enable_wildcard: bool = True):
-        return next(iter(self.get_instances_by_name(name, enable_wildcard) or []), None)
+    def get_instance_by_name(
+        self, name: str, enable_wildcard: bool = True
+    ) -> Union[Instance, None]:
+        for instance in self.get_instances_by_name(name, enable_wildcard):
+            return instance
 
 
 class Ec2Cli(object):
@@ -37,19 +41,17 @@ class Ec2Cli(object):
         self._console = get_console()
         self._ec2 = Ec2()
 
-    def instances(self, name: str) -> None:
+    def instances(self, name: str, enable_wildcard: bool = True) -> None:
         with self._console.status("[bold green]Fetching instances info...") as status:
-            instances = self._ec2.get_instances_by_name(name)
+            instances = self._ec2.get_instances_by_name(name, enable_wildcard)
             self._render_instances(instances)
 
-    def ssh(self, instance_name: str) -> int:
+    def ssh(self, instance_name: str, enable_wildcard: bool = True) -> int:
         """SSH to the first EC2 instances that matches the name filter given."""
         with self._console.status(
             "[bold green]Fetching instance IP address..."
         ) as status:
-            instance = self._ec2.get_instance_by_name(
-                instance_name, enable_wildcard=False
-            )
+            instance = self._ec2.get_instance_by_name(instance_name, enable_wildcard)
 
         if not instance:
             self._console.print(
@@ -57,7 +59,7 @@ class Ec2Cli(object):
             )
             return 1
 
-        ip_address = instance["PrivateIpAddress"]
+        ip_address = instance.private_ip_address
         self._console.print(f"[bold green]Connecting to {ip_address}...")
         return ssh_to(ip_address)
 
@@ -75,7 +77,7 @@ class Ec2Cli(object):
             )
             return 1
 
-        ssh_server_ip_address = instance["PrivateIpAddress"]
+        ssh_server_ip_address = instance.private_ip_address
         local_host = "localhost"
         with self._console.status(
             f"[bold green]Setting up an SSH tunnel to {host}:{port} via {ssh_server_ip_address}... "
@@ -112,7 +114,13 @@ class Ec2Cli(object):
 
         return 0
 
-    def _render_instances(self, instances):
+    def _render_instances(self, instances: ServiceResourceInstancesCollection):
+        if len(list(instances)) <= 0:
+            self._console.print(
+                "[bright_yellow]⚠ There are no EC2 instances running in this account.[/bright_yellow]"
+            )
+            return
+
         table = Table(show_header=True, header_style="bold green")
         table.add_column("Instance Name")
         table.add_column("Instance Id")
@@ -121,15 +129,16 @@ class Ec2Cli(object):
         table.add_column("Launch Time")
         table.add_column("Private IP Address")
         for instance in instances:
+            # See https://boto3.amazonaws.com/v1/documentation/api/1.17.74/reference/services/ec2.html#EC2.ServiceResource.Instance
             instance_name = [
-                tag["Value"] for tag in instance["Tags"] if tag["Key"] == "Name"
+                tag["Value"] for tag in instance.tags if tag["Key"] == "Name"
             ][0]
             table.add_row(
                 instance_name,
-                instance["InstanceId"],
-                instance["InstanceType"],
-                instance["Placement"]["AvailabilityZone"],
-                instance["LaunchTime"].strftime("%Y-%m-%d %H:%M:%S"),
-                instance["PrivateIpAddress"],
+                instance.instance_id,
+                instance.instance_type,
+                instance.placement["AvailabilityZone"],
+                instance.launch_time.strftime("%Y-%m-%d %H:%M:%S"),
+                instance.private_ip_address,
             )
         self._console.print(table)
