@@ -30,7 +30,7 @@ commands = {
     'sts': StsCli
 }
 # print(commands)
-commands['multiaccount'] = MultiAccountCli(commands)
+# commands['multiaccount'] = MultiAccountCli(commands)
 # print(commands)
 # exit()
 

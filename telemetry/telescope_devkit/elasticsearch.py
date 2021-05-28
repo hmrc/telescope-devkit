@@ -29,6 +29,7 @@ class Comrade(object):
                 f"[red]ERROR: No '{instance_name}' instances found in this account[/red]"
             )
             return 1
+        exit()
 
         ssh_server_ip_address = instance.private_ip_address
         with self._console.status(
@@ -106,6 +107,8 @@ class Comrade(object):
 class ElasticsearchCli(object):
     def __init__(self):
         self._comrade = Comrade()
+        print('init')
 
     def comrade(self):
-        self._comrade.run()
+        # self._comrade.run()
+        print('run')
