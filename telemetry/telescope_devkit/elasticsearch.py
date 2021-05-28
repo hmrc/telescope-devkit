@@ -18,6 +18,10 @@ class Comrade(object):
         self._clusters_data_dir = os.path.join(
             get_repo_path(), "data/elasticsearch-comrade"
         )
+        self._host_data_dir = os.path.join(
+            "/Users/craig/src/hmrc/telescope-devkit", "data/elasticsearch-comrade"
+        )
+        
         self._use_docker_py = False
 
     def run(self):
@@ -29,8 +33,7 @@ class Comrade(object):
                 f"[red]ERROR: No '{instance_name}' instances found in this account[/red]"
             )
             return 1
-        exit()
-
+        
         ssh_server_ip_address = instance.private_ip_address
         with self._console.status(
             f"[bold green]Setting up an SSH tunnel to elasticsearch:9200 via {ssh_server_ip_address}... "
@@ -54,7 +57,7 @@ class Comrade(object):
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
                     volumes={
-                        self._clusters_data_dir: {
+                        self._host_data_dir: {
                             "bind": "/app/comrade/clusters/",
                             "mode": "rw",
                         }
@@ -72,7 +75,7 @@ class Comrade(object):
                 self._docker.run_interactive_legacy(
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
-                    volumes={self._clusters_data_dir: "/app/comrade/clusters/"},
+                    volumes={self._host_data_dir: "/app/comrade/clusters/"},
                     environment={"COMRADE_DEBUG": "true"},
                 )
         except KeyboardInterrupt:
@@ -107,8 +110,8 @@ class Comrade(object):
 class ElasticsearchCli(object):
     def __init__(self):
         self._comrade = Comrade()
-        print('init')
+        # print('init')
 
     def comrade(self):
-        # self._comrade.run()
+        self._comrade.run()
         print('run')

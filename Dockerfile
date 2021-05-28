@@ -9,6 +9,8 @@ COPY . /app/
 
 WORKDIR /app
 
+RUN apt update -y && apt install -y docker.io
+
 RUN pip install --upgrade pip poetry \
     && poetry config virtualenvs.create false \
     && poetry build -f wheel -v \
