@@ -107,7 +107,7 @@ class Ec2Cli(object):
             "\nPress [yellow]<Enter>[/yellow] at any time to stop the SSH tunnel... "
         )
 
-        with self._console.status(
+        with self._console.print(
             f"[bold green]Stopping SSH tunnel to {host}:{port} via {ssh_server_ip_address}..."
         ) as status:
             tunnel.stop()
