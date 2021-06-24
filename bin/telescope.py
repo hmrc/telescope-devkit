@@ -3,6 +3,7 @@ from os.path import isdir
 import shutil
 import sys
 
+from telemetry.telescope_devkit.asg import AsgCli
 from telemetry.telescope_devkit.cli import cli, get_console
 from telemetry.telescope_devkit.ec2 import Ec2Cli
 from telemetry.telescope_devkit.elasticsearch import ElasticsearchCli
@@ -11,6 +12,7 @@ from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase2PreCutover
 
 commands = {
     'ec2': Ec2Cli,
+    'asg': AsgCli,
     'elasticsearch': ElasticsearchCli,
     'logs': LogsCli,
     'migration' : {
