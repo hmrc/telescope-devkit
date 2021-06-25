@@ -5,14 +5,16 @@ import sys
 
 from telemetry.telescope_devkit.asg import AsgCli
 from telemetry.telescope_devkit.cli import cli, get_console
+from telemetry.telescope_devkit.codebuild import CodebuildCli
 from telemetry.telescope_devkit.ec2 import Ec2Cli
 from telemetry.telescope_devkit.elasticsearch import ElasticsearchCli
 from telemetry.telescope_devkit.logs import LogsCli
 from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase2PreCutoverCli, Phase2PostCutoverCli, Phase3Cli
 
 commands = {
-    'ec2': Ec2Cli,
     'asg': AsgCli,
+    'codebuild': CodebuildCli,
+    'ec2': Ec2Cli,
     'elasticsearch': ElasticsearchCli,
     'logs': LogsCli,
     'migration' : {
