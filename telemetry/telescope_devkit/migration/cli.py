@@ -67,12 +67,12 @@ class Phase1Cli(MigrationChecklist):
     def __init__(self):
         super().__init__()
         self._checklist = [
-            # TerraformBuild(),
-            # EcsStatusChecks(),
+            TerraformBuild(),
+            EcsStatusChecks(),
             KafkaConsumption(),
-            # ElasticSearchIngest(),
-            # NwtPublicWebUis(),
-            # WebopsPublicWebUis(),
+            ElasticSearchIngest(),
+            NwtPublicWebUis(),
+            WebopsPublicWebUis(),
         ]
 
     def list(self):
@@ -96,7 +96,7 @@ class Phase2PreCutoverCli(MigrationChecklist):
             WebopsPublicWebUis(),
             LogsDataIsValid(),
             MetricsDataIsValid(),
-            RelevantAlertsAreRunningInWebops(),
+            SensuChecksAreRunningInWebops(),
             InitialAlertsAreRunningInNwt(),
         ]
 
@@ -113,9 +113,10 @@ class Phase2PostCutoverCli(MigrationChecklist):
     def __init__(self):
         super().__init__()
         self._checklist = [
+            KafkaConsumption(),
             NwtPublicWebUisRedirectFromWebops(),
-            RelevantAlertsAreRunningInWebops(),
-            RelevantAlertsAreRunningInNwt(),
+            SensuChecksAreRunningInWebops(),
+            SensuChecksAreRunningInNwt(),
         ]
 
     def list(self):
@@ -132,8 +133,8 @@ class Phase3Cli(MigrationChecklist):
         super().__init__()
         self._checklist = [
             WebopsPublicWebUisNotRunning(),
-            RelevantAlertsAreRunningInWebops(),
-            RelevantAlertsAreRunningInNwt(),
+            SensuChecksAreRunningInWebops(),
+            SensuChecksAreRunningInNwt(),
         ]
 
     def list(self):

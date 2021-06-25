@@ -324,8 +324,8 @@ class MetricsDataIsValid(Check):
         return self.launch_manual_intervention_prompt()
 
 
-class RelevantAlertsAreRunningInWebops(Check):
-    _description = "Relevant alerts are still running in webops"
+class SensuChecksAreRunningInWebops(Check):
+    _description = "Sensu checks are still running in webops"
     _requires_manual_intervention = True
 
     def check_interactively(self):
@@ -348,8 +348,8 @@ class NwtPublicWebUisRedirectFromWebops(Check):
         return self.launch_manual_intervention_prompt()
 
 
-class RelevantAlertsAreRunningInNwt(Check):
-    _description = "Relevant alerts are now running in NWT"
+class SensuChecksAreRunningInNwt(Check):
+    _description = "Sensu checks are now running in NWT"
     _requires_manual_intervention = True
 
     def check_interactively(self):
