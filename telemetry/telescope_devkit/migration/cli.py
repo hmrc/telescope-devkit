@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from rich.table import Table
 
 from telemetry.telescope_devkit.cli import get_console
@@ -48,7 +48,7 @@ class MigrationChecklist(object):
 
         self._console.print("\n[yellow]Status report:[/yellow]")
         self._console.print(f"* Environment: [bold]{sts.account_name}[/bold]")
-        now = datetime.now()
+        now = datetime.datetime.now()
         self._console.print(f"* Checklist performed on { now.ctime()}")
         self._console.print(
             f"* Checks: {checks['pass']} successful, {checks['fail']} failed."
@@ -96,7 +96,7 @@ class Phase2PreCutoverCli(MigrationChecklist):
             WebopsPublicWebUis(),
             LogsDataIsValid(),
             MetricsDataIsValid(),
-            RelevantAlertsAreRunningInWebops(),
+            SensuChecksAreRunningInWebops(),
             InitialAlertsAreRunningInNwt(),
         ]
 
@@ -113,9 +113,10 @@ class Phase2PostCutoverCli(MigrationChecklist):
     def __init__(self):
         super().__init__()
         self._checklist = [
+            KafkaConsumption(),
             NwtPublicWebUisRedirectFromWebops(),
-            RelevantAlertsAreRunningInWebops(),
-            RelevantAlertsAreRunningInNwt(),
+            SensuChecksAreRunningInWebops(),
+            SensuChecksAreRunningInNwt(),
         ]
 
     def list(self):
@@ -132,8 +133,8 @@ class Phase3Cli(MigrationChecklist):
         super().__init__()
         self._checklist = [
             WebopsPublicWebUisNotRunning(),
-            RelevantAlertsAreRunningInWebops(),
-            RelevantAlertsAreRunningInNwt(),
+            SensuChecksAreRunningInWebops(),
+            SensuChecksAreRunningInNwt(),
         ]
 
     def list(self):

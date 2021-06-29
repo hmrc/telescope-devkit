@@ -23,13 +23,13 @@ Interactions with this tool can be done through the `telescope` bash script.
 The command below will do both:
 
 ```shell
-❯ make install
+make install
 ```
 
 Assuming that `/usr/local/bin` is in your `PATH` then just launch the binary as:
 
 ```shell
-❯ telescope
+telescope
  
 NAME
     telescope
@@ -56,7 +56,7 @@ COMMANDS
 Get list of EC2 of `clickhouse` instances in `internal-telemetry`:
 
 ```shell
-❯ aws-profile -p telemetry-internal-telemetry-RoleTelemetryEngineer bin/telescope ec2 instances clickhouse
+aws-profile -p telemetry-internal-telemetry-RoleTelemetryEngineer bin/telescope ec2 instances clickhouse
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
 ┃ Instance Name             ┃ Instance Id         ┃ Instance Type ┃ Availability Zone ┃ Launch Time         ┃ Private IP Address ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
@@ -76,12 +76,12 @@ This repo provides a checklist comprised of automated and interactive checks for
 For each migration phase you can run the checks by using the corresponding AWS profile and invoking the `migration <phase-name> check` command:
 
 ```shell
-❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration phase-1 check
+aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration phase-1 check
 ```
 A report will be published at the end which you can screenshot and attach to a JIRA ticket or Confluence page. Example:
 ```shell
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   ❯   Phase 1 checklist (mdtp-staging)                                                       ┃
+┃     Phase 1 checklist (mdtp-staging)                                                       ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
 │ [ x ] Terraform Build job is green                                                           │
 │ [ x ] ECS Status Checks are green                                                            │
@@ -102,7 +102,7 @@ Status report:
 
 You can list the available migration phases with:
 ```shell
-❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration                                                                                                                                                                                        16:41:41
+aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope migration                                                                                                                                                                                        16:41:41
 
 NAME
     telescope migration
@@ -130,7 +130,7 @@ COMMANDS
 To update `telescope`:
 
 ```shell
-❯ telescope app-update
+telescope app-update
 ```
 
 ### Development mode
@@ -146,7 +146,7 @@ With this environment variable set you will see the `Running in development mode
 You may also find running commands within the Docker container more efficient that launching a new container every time. Use `app-shell` to get a terminal in a Docker container.
 
 ```shell
-❯ aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope app-shell                                                                                                                                                                                                                           11:58:25
+aws-profile -p telemetry-mdtp-staging-RoleTelemetryEngineer bin/telescope app-shell                                                                                                                                                                                                                           11:58:25
 Running in development mode.
 
 bin/telescope.py migration phase-1 check

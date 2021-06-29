@@ -36,7 +36,7 @@ class Grafana:
 
             if response.status_code != 200:
                 raise Exception(
-                    f"ERROR! has_metric received unexpected response code {response.status_code}, response: {response.content}"
+                    f"ERROR! has_metric received unexpected response code {response.status_code}, response: {response.content}, url: {url}, data: {data}"
                 )
 
             json = response.json()
