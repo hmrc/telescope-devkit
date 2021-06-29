@@ -1,9 +1,3 @@
-# codebuild_master() {
-#   print_step "Start '${BUILD_NAME}' CodeBuild job from master"
-#   aws codebuild start-build\
-#     --project-name ${BUILD_NAME}\
-#     --query 'build.[projectName, currentPhase, {Build: buildNumber}, {"For branch": sourceVersion}]' && print_step_done
-# }
 import boto3
 
 from telemetry.telescope_devkit.cli import get_console

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os.path
 from os.path import isdir
 import shutil
 import sys
@@ -27,9 +28,11 @@ commands = {
 
 
 def is_running_in_docker() -> bool:
+    if not os.path.isfile('/proc/1/cgroup'):
+        return False
+
     with open('/proc/1/cgroup', 'rt') as ifh:
         return 'docker' in ifh.read()
-
 
 def setup_ssh_config():
     if not isdir("/root/.ssh"):

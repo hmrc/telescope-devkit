@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import shlex
@@ -194,10 +195,14 @@ class ElasticSearchIngest(Check):
         )
         metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
         data = grafana.get_metric_value(metric_query=metric_query)
+        if not data:
+            raise Exception(
+                f"No datapoints available for metrics query '{metric_query}'"
+            )
+
         return round(float(data[0]["datapoints"][0][0]), 2)
 
     def _get_indexing_rate_from_tnt(self):
-        account_name = str(self.sts.account_name).replace("mdtp-", "")
         grafana = Grafana(
             hostname="grafana.internal-telemetry.telemetry.tax.service.gov.uk",
             ssm_path="/telemetry/secrets/grafana/tnt_migration_api_key",
@@ -212,6 +217,11 @@ class ElasticSearchIngest(Check):
 
         metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*{ip_filter}*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
         data = grafana.get_metric_value(metric_query=metric_query)
+        if not data:
+            raise Exception(
+                f"No datapoints available for metrics query '{metric_query}'"
+            )
+
         return round(float(data[0]["datapoints"][0][0]), 2)
 
     def check(self):
@@ -221,6 +231,10 @@ class ElasticSearchIngest(Check):
             webops_indexing_rate = self._get_indexing_rate_from_webops()
             tnt_indexing_rate = self._get_indexing_rate_from_tnt()
         except ClientError as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
+        except Exception as e:
             self.logger.debug(e)
             self._is_successful = False
             return
@@ -236,7 +250,7 @@ class ElasticSearchIngest(Check):
             self.logger.debug(
                 "The difference between elasticsearch ingest in webops compared to NWT is above threshold"
             )
-            self.logger.debug(f"Indexing rate in webops is {webops_indexing_rate}")
+            self.logger.debug(f"Indexing rate in WebOps is {webops_indexing_rate}")
             self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
             self.logger.debug(f"Indexing rate difference is {rate_difference}%")
             self._is_successful = False
@@ -272,7 +286,7 @@ class NwtPublicWebUis(Check):
 
 
 class WebopsPublicWebUis(Check):
-    _description = "I can load the Webops Kibana and Grafana Web UIs via the Webops tools proxy public DNS"
+    _description = "I can load the Webops Kibana and Grafana Web UIs via the WebOps tools proxy public DNS"
 
     def check(self):
         self.logger.info(f"Check: {self._description}")
@@ -318,14 +332,65 @@ class LogsDataIsValid(Check):
 
 class MetricsDataIsValid(Check):
     _description = "Metrics data in NWT is valid"
-    _requires_manual_intervention = True
+    _requires_manual_intervention = False
 
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
+    def check(self):
+        self.logger.info(f"Check: {self._description}")
+
+        from_minutes_ago = 15
+        to_minutes_ago = 10  # Allow a 10 minutes grace period:
+        now = datetime.datetime.now()
+        from_timestamp = int(
+            (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
+        )
+        to_timestamp = int(
+            (now - datetime.timedelta(minutes=to_minutes_ago)).timestamp()
+        )
+
+        max_data_points = from_minutes_ago - to_minutes_ago
+        metric_query = f"alias(maximumAbove(group(averageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.heap.max%2C0%2C2)%2CaverageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.jvm.memory.heap.max%2C0%2C2))%2C0)%2C%20'Heap%20Max')&from={from_timestamp}&until={to_timestamp}&format=json&maxDataPoints={max_data_points}"
+        self.logger.debug(f"Fetching data for graphite query: '{metric_query}'")
+
+        try:
+            nwt_datapoints = self._get_metric_values_from_nwt(metric_query)
+            self.logger.debug(f"{self.sts.account_name} datapoints: {nwt_datapoints}")
+
+            webops_datapoints = self._get_metric_values_from_webops(metric_query)
+            webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
+            self.logger.debug(f"{webops_account_name} datapoints: {webops_datapoints}")
+
+            if nwt_datapoints == webops_datapoints:
+                self.logger.debug("Datapoints match")
+                self._is_successful = True
+            else:
+                self.logger.debug("Datapoints don't match")
+                self._is_successful = False
+        except ClientError as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
+
+    def _get_metric_values_from_nwt(self, metric_query: str):
+        grafana = Grafana(
+            hostname=f"grafana.{self.sts.account_name}.telemetry.tax.service.gov.uk"
+        )
+        data = grafana.get_metric_value(metric_query=metric_query)
+
+        return data[0]["datapoints"]
+
+    def _get_metric_values_from_webops(self, metric_query: str):
+        webops_account_name = str(self.sts.account_name).replace("mdtp-", "")
+        grafana = Grafana(
+            hostname=f"grafana.tools.{webops_account_name}.tax.service.gov.uk",
+            ssm_path="/telemetry/secrets/grafana/webops_migration_api_key",
+        )
+        data = grafana.get_metric_value(metric_query=metric_query)
+
+        return data[0]["datapoints"]
 
 
 class SensuChecksAreRunningInWebops(Check):
-    _description = "Sensu checks are still running in webops"
+    _description = "Sensu checks are still running in WebOps"
     _requires_manual_intervention = True
 
     def check_interactively(self):
@@ -341,7 +406,7 @@ class InitialAlertsAreRunningInNwt(Check):
 
 
 class NwtPublicWebUisRedirectFromWebops(Check):
-    _description = "I am successfully redirected to NWT Kibana & Grafana when hitting the webops tools URLs"
+    _description = "I am successfully redirected to NWT Kibana & Grafana when hitting the WebOps tools URLs"
     _requires_manual_intervention = True
 
     def check_interactively(self):
@@ -357,7 +422,7 @@ class SensuChecksAreRunningInNwt(Check):
 
 
 class WebopsPublicWebUisNotRunning(Check):
-    _description = "The following are no longer running in webops: Clickhouse, Elasticsearch, Kibana, Grafana"
+    _description = "The following are no longer running in WebOps: Clickhouse, Elasticsearch, Kibana, Grafana"
     _requires_manual_intervention = True
 
     def check_interactively(self):

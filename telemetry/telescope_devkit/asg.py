@@ -9,8 +9,6 @@ class Asg(object):
         self.autoscaling_client = boto3.client("autoscaling", region_name="eu-west-2")
 
     def get_telemetry_asgs(self):
-        response = self.autoscaling_client.describe_auto_scaling_groups(MaxRecords=100)
-
         paginator = self.autoscaling_client.get_paginator(
             "describe_auto_scaling_groups"
         )
@@ -27,16 +25,17 @@ class AsgCli(object):
         self._asg = Asg()
 
     def all_telemetry(self):
-        filtered_asgs = self._asg.get_telemetry_asgs()
-
+        """
+        Fetch details for all Telemetry ASGs running in a given environment
+        """
         table = Table(show_header=True, header_style="bold green")
-        table.add_column("AutoScalingGroupName")
-        table.add_column("DesiredCapacity")
-        table.add_column("MinSize")
-        table.add_column("MaxSize")
+        table.add_column("ASG Name")
+        table.add_column("Desired Capacity")
+        table.add_column("Min Size")
+        table.add_column("Max Size")
         table.add_column("Instance Type")
 
-        for asg in filtered_asgs:
+        for asg in self._asg.get_telemetry_asgs():
             if asg["Instances"]:
                 table.add_row(
                     asg["AutoScalingGroupName"],
