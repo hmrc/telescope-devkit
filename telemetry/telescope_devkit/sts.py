@@ -10,12 +10,17 @@ from telemetry.telescope_devkit.cli import get_console
 
 
 class Sts(object):
-    def __init__(self, client=boto3.client("sts")):
+
+    def get_client():
+        return boto3.client("sts")
+        
+    def __init__(self, client=get_client()):
         try:
             self._sts = client
         except ValueError as e:
             raise Exception(f"{e}\nAre you running {APP_NAME} in an AWS profile?")
         self.aws_accounts = load_aws_accounts()
+
 
     @property
     def account(self) -> str:

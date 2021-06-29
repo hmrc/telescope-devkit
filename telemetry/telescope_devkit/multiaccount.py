@@ -7,7 +7,7 @@ import inspect
 from telemetry.telescope_devkit import APP_NAME
 from telemetry.telescope_devkit.filesystem import get_repo_path
 from telemetry.telescope_devkit.cli import get_console
-from telemetry.telescope_devkit.sts import Sts, load_aws_accounts
+from telemetry.telescope_devkit.sts import load_aws_accounts
 from rich.prompt import Prompt
 
 # class MultiAccount(object):

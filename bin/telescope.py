@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import os.path
 from os.path import isdir
+from os import getenv
+import os
 import shutil
 import sys
-from telemetry.telescope_devkit.multiaccount import MultiAccountCli
 
 from telemetry.telescope_devkit.asg import AsgCli
 from telemetry.telescope_devkit.cli import cli, get_console
@@ -13,6 +14,11 @@ from telemetry.telescope_devkit.elasticsearch import ElasticsearchCli
 from telemetry.telescope_devkit.logs import LogsCli
 from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase2PreCutoverCli, Phase2PostCutoverCli, Phase3Cli
 from telemetry.telescope_devkit.sts import StsCli
+
+enable_multi_account = getenv('ENABLE_MULTI_ACCOUNT', "false") == "true"
+
+if (enable_multi_account):
+    from telemetry.telescope_devkit.multiaccount import MultiAccountCli
 
 commands = {
     'asg': AsgCli,
