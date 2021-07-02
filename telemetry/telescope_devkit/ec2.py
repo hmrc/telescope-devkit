@@ -10,11 +10,11 @@ from telemetry.telescope_devkit.ssh import ssh_to, LocalPortForwarding
 
 
 class Ec2(object):
-    def __init__(self):
+    def __init__(self, session=boto3):
         """
         See https://boto3.amazonaws.com/v1/documentation/api/1.17.74/reference/services/ec2.html#EC2.ServiceResource.instances
         """
-        self._ec2_resource_service_client = boto3.resource("ec2")
+        self._ec2_resource_service_client = session.resource("ec2")
 
     def get_instances_by_name(
         self, name: str, enable_wildcard: bool = True

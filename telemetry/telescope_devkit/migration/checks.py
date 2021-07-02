@@ -421,9 +421,33 @@ class SensuChecksAreRunningInNwt(Check):
         return self.launch_manual_intervention_prompt()
 
 
-class WebopsPublicWebUisNotRunning(Check):
-    _description = "The following are no longer running in WebOps: Clickhouse, Elasticsearch, Kibana, Grafana"
-    _requires_manual_intervention = True
+class WebopsEc2InstancesHaveBeenDecommissioned(Check):
+    _description = "The following are no longer running in WebOps: ClickHouse, Elasticsearch-Data, Elasticsearch-Data-Warm, Elasticsearch-Query, Kibana, Grafana"
+    _requires_manual_intervention = False
 
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
+    def check(self):
+        self.logger.info(f"Check: {self._description}")
+
+        webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+        instance_names = [
+            "clickhouse-server-shard_1",
+            "clickhouse-server-shard_2",
+            "elasticsearch-data",
+            "elasticsearch-data-warm",
+            "elasticsearch-query",
+            "elasticsearch-kibana",
+            "graphite-frontend",
+        ]
+        for instance_name in instance_names:
+            instances = webops_ec2.get_instances_by_name(
+                name=instance_name, enable_wildcard=False
+            )
+            instance_count = len(list(instances))
+            self.logger.debug(
+                f"There are {instance_count} {instance_name} instance(s) running in the {self.sts.webops_account_name} account"
+            )
+            if instance_count > 0:
+                self._is_successful = False
+                return
+
+        self._is_successful = True

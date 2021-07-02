@@ -132,7 +132,8 @@ class Phase3Cli(MigrationChecklist):
     def __init__(self):
         super().__init__()
         self._checklist = [
-            WebopsPublicWebUisNotRunning(),
+            NwtPublicWebUisRedirectFromWebops(),
+            WebopsEc2InstancesHaveBeenDecommissioned(),
             SensuChecksAreRunningInWebops(),
             SensuChecksAreRunningInNwt(),
         ]
