@@ -68,6 +68,10 @@ run_default() {
   return $?
 }
 
+echo "default_bind_mounts : ${default_bind_mounts[@]}"
+echo "dev_bind_mounts : ${dev_bind_mounts[@]}"
+# exit
+
 if [ $# -ge 1 ]; then
   case $1 in
     "app-build")
