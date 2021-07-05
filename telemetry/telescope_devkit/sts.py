@@ -25,6 +25,10 @@ class Sts(object):
         return self.aws_accounts[self.account]
 
     @property
+    def arn(self) -> str:
+        return self._sts.get_caller_identity()["Arn"]
+
+    @property
     def user_id(self) -> str:
         return self._sts.get_caller_identity()["UserId"]
 
@@ -58,3 +62,13 @@ def load_aws_accounts() -> dict:
 
 def get_account_name() -> str:
     return Sts().account_name
+
+
+class StsCli(object):
+    def __init__(self, session=boto3.session.Session()):
+        self._console = get_console()
+        self._sts = Sts(session.client("sts"))
+
+    def get_caller_identity(self) -> None:
+        with self._console.status("[bold green]Getting caller identity...") as status:
+            self._console.print(f"Currently running in {self._sts.account} as {self._sts.arn}")

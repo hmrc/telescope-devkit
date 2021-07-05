@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-
+ssh_path=${HMRC_SSH_CONFIG_PATH:-$HOME/.ssh}
+aws_path=${AWS_CONFIG_PATH:-$HOME/.aws}
 docker_image_name="mdtp-telemetry/telescope-devkit:latest"
 docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
 devmode=${TELESCOPE_DEVKIT_DEVMODE:-false}
 # shellcheck disable=SC2054
-default_bind_mounts=(--mount type=bind,source="${HOME}/.ssh",target=/root/.ssh_host --mount type=bind,source="${HOME}/.aws",target=/root/.aws --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock)
+default_bind_mounts=(--mount type=bind,source="${ssh_path}",target=/root/.ssh_host --mount type=bind,source="${aws_path}",target=/root/.aws)
+# shellcheck disable=SC2054
+default_args=(-p 9200:9200 -e HOST_REPO_PATH=$(pwd))
+
 # shellcheck disable=SC2054
 dev_bind_mounts=(--mount type=bind,source="$(pwd)",target=/app)
 
@@ -48,9 +52,9 @@ run_docker_build() {
 run_docker_shell() {
   if [ "true" = "${devmode}" ]; then
     echo -e "\e[33mRunning in development mode.\e[0m"
-    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
   else
-    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
   fi
   return $?
 }
@@ -58,12 +62,17 @@ run_docker_shell() {
 run_default() {
   if [ "true" = "${devmode}" ]; then
     echo -e "\e[33mRunning in development mode.\e[0m"
-    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
+    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
   else
-    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" ${docker_image_name} "$@"
+    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" ${docker_image_name} "$@"
   fi
   return $?
 }
+
+echo "default_bind_mounts : ${default_bind_mounts[@]}"
+echo "dev_bind_mounts : ${dev_bind_mounts[@]}"
+echo "default_args : ${default_args[@]}"
+# exit
 
 if [ $# -ge 1 ]; then
   case $1 in

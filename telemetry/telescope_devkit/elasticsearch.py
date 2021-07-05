@@ -18,6 +18,10 @@ class Comrade(object):
         self._clusters_data_dir = os.path.join(
             get_repo_path(), "data/elasticsearch-comrade"
         )
+        self._host_data_dir = os.path.join(
+            os.environ["HOST_REPO_PATH"], "data/elasticsearch-comrade"
+        )
+        
         self._use_docker_py = False
 
     def run(self):
@@ -53,7 +57,7 @@ class Comrade(object):
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
                     volumes={
-                        self._clusters_data_dir: {
+                        self._host_data_dir: {
                             "bind": "/app/comrade/clusters/",
                             "mode": "rw",
                         }
@@ -71,7 +75,7 @@ class Comrade(object):
                 self._docker.run_interactive_legacy(
                     image="mosheza/elasticsearch-comrade",
                     ports={8000: 8000},
-                    volumes={self._clusters_data_dir: "/app/comrade/clusters/"},
+                    volumes={self._host_data_dir: "/app/comrade/clusters/"},
                     environment={"COMRADE_DEBUG": "true"},
                 )
         except KeyboardInterrupt:
@@ -106,6 +110,8 @@ class Comrade(object):
 class ElasticsearchCli(object):
     def __init__(self):
         self._comrade = Comrade()
+        # print('init')
 
     def comrade(self):
         self._comrade.run()
+        # print('run')
