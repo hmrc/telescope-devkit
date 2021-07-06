@@ -12,7 +12,7 @@ class LocalPortForwarding(object):
         ssh_server: str,
         destination_host: str,
         destination_port: int,
-        local_host="localhost",
+        local_host="0.0.0.0",
         local_port=None,
     ):
         self.ssh_server = ssh_server
