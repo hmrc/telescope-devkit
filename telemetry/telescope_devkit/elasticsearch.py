@@ -21,7 +21,7 @@ class Comrade(object):
         self._host_data_dir = os.path.join(
             os.environ["HOST_REPO_PATH"], "data/elasticsearch-comrade"
         )
-        
+
         self._use_docker_py = False
 
     def run(self):

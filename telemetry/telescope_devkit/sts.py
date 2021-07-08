@@ -71,4 +71,6 @@ class StsCli(object):
 
     def get_caller_identity(self) -> None:
         with self._console.status("[bold green]Getting caller identity...") as status:
-            self._console.print(f"Currently running in {self._sts.account} as {self._sts.arn}")
+            self._console.print(
+                f"Currently running in {self._sts.account} as {self._sts.arn}"
+            )

@@ -135,7 +135,7 @@ class Phase3Cli(MigrationChecklist):
             NwtPublicWebUisRedirectFromWebops(),
             WebopsEc2InstancesHaveBeenDecommissioned(),
             SensuChecksAreRunningInWebops(),
-            SensuChecksAreRunningInNwt(),
+            # SensuChecksAreRunningInNwt(), // N/A for mdtp-integration
         ]
 
     def list(self):

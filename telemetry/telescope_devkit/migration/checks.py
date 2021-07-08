@@ -1,10 +1,10 @@
 import datetime
 import json
-import logging
 import shlex
 import subprocess
 from json.decoder import JSONDecodeError
 
+import re
 import requests
 from botocore.exceptions import ClientError
 from rich.prompt import Prompt
@@ -407,10 +407,44 @@ class InitialAlertsAreRunningInNwt(Check):
 
 class NwtPublicWebUisRedirectFromWebops(Check):
     _description = "I am successfully redirected to NWT Kibana & Grafana when hitting the WebOps tools URLs"
-    _requires_manual_intervention = True
 
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
+    def check(self):
+        self.logger.info(f"Check: {self._description}")
+        self._is_successful = self._check_grafana() and self._check_kibana()
+
+    def _check_grafana(self):
+        grafana_url = (
+            f"https://grafana.tools.{self.sts.webops_account_name}.tax.service.gov.uk"
+        )
+        try:
+            grafana_major_version = "7"
+            self.logger.debug(f"Fetching HTML content from {grafana_url}")
+            r = requests.get(grafana_url)
+            match = re.search(
+                rf"Grafana v{grafana_major_version}\.\d+\.\d+", r.text, re.IGNORECASE
+            )
+            return match is not None
+        except Exception as e:
+            self.logger.debug(e)
+            return False
+
+    def _check_kibana(self):
+        kibana_major_version = "7"
+        kibana_url = (
+            f"https://kibana.tools.{self.sts.webops_account_name}.tax.service.gov.uk"
+        )
+        try:
+            self.logger.debug(f"Fetching HTML content from {kibana_url}")
+            r = requests.get(kibana_url)
+            match = re.search(
+                rf"&quot;version&quot;:&quot;{kibana_major_version}\.\d+\.\d+&quot;",
+                r.text,
+                re.IGNORECASE,
+            )
+            return match is not None
+        except Exception as e:
+            self.logger.debug(e)
+            return False
 
 
 class SensuChecksAreRunningInNwt(Check):
