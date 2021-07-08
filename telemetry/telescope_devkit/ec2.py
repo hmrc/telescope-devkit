@@ -63,7 +63,9 @@ class Ec2Cli(object):
         self._console.print(f"[bold green]Connecting to {ip_address}...")
         return ssh_to(ip_address)
 
-    def tunnel(self, instance_name: str, host: str, port: int, local_host:str = "0.0.0.0") -> int:
+    def tunnel(
+        self, instance_name: str, host: str, port: int, local_host: str = "0.0.0.0"
+    ) -> int:
         with self._console.status(
             "[bold green]Fetching instance IP address..."
         ) as status:
@@ -78,7 +80,7 @@ class Ec2Cli(object):
             return 1
 
         ssh_server_ip_address = instance.private_ip_address
-        
+
         with self._console.status(
             f"[bold green]Setting up an SSH tunnel to {host}:{port} via {ssh_server_ip_address}... "
         ) as status:
