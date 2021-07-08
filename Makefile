@@ -17,6 +17,10 @@ app-build: ## Build the telescope-devkit Docker image
 	@bin/telescope app-build
 .PHONY: app-build
 
+app-debug: ## Print how telescope-devkit is currently being configured
+	@bin/telescope app-debug
+.PHONY: app-debug
+
 app-update: ## Updates the local telescope-devkit git copy and re-builds the Docker image
 	@bin/telescope app-update
 .PHONY: app-update

@@ -1,16 +1,4 @@
 #!/usr/bin/env bash
-ssh_path=${HMRC_SSH_CONFIG_PATH:-$HOME/.ssh}
-aws_path=${AWS_CONFIG_PATH:-$HOME/.aws}
-docker_image_name="mdtp-telemetry/telescope-devkit:latest"
-docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
-devmode=${TELESCOPE_DEVKIT_DEVMODE:-false}
-# shellcheck disable=SC2054
-default_bind_mounts=(--mount type=bind,source="${ssh_path}",target=/root/.ssh_host --mount type=bind,source="${aws_path}",target=/root/.aws)
-# shellcheck disable=SC2054
-default_args=(-p 9200:9200 -e HOST_REPO_PATH=$(pwd))
-
-# shellcheck disable=SC2054
-dev_bind_mounts=(--mount type=bind,source="$(pwd)",target=/app)
 
 get_source_dir() {
      SOURCE="${BASH_SOURCE[0]}"
@@ -25,16 +13,38 @@ get_source_dir() {
      echo "${DIR}/../"
 }
 
+source "$(get_source_dir)/bin/colours.sh"
+
+ssh_path=${HMRC_SSH_CONFIG_PATH:-$HOME/.ssh}
+aws_path=${AWS_CONFIG_PATH:-$HOME/.aws}
+docker_image_name="mdtp-telemetry/telescope-devkit:latest"
+docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
+devmode=${TELESCOPE_DEVKIT_DEVMODE:-false}
+# shellcheck disable=SC2054
+default_bind_mounts=(--mount type=bind,source="${ssh_path}",target=/root/.ssh_host --mount type=bind,source="${aws_path}",target=/root/.aws)
+# shellcheck disable=SC2054
+default_args=(-p 9200:9200 -e HOST_REPO_PATH=$(pwd))
+# shellcheck disable=SC2054
+dev_bind_mounts=(--mount type=bind,source="$(pwd)",target=/app)
+
 git_update() {
   cd "$(get_source_dir)" || return 1
   main_branch="master"
   active_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ "${main_branch}" != "${active_branch}" ]; then
-    echo -e "\e[91mERROR: Unable to update as the Git repo is not on the '${main_branch}' branch. Current branch is '${active_branch}'.\e[0m"
+    echo -e "${CLR_HI_RED}ERROR: Unable to update as the Git repo is not on the '${main_branch}' branch. Current branch is '${active_branch}'.${CLR_RESET}"
     return 1
   fi
   git pull
   return $?
+}
+
+run_app_debug() {
+  echo -e "${CLR_HI_BLUE}telescope-devkit${CLR_RESET} is currently being launched with:"
+  echo -e "* ${CLR_BLUE}default_bind_mounts${CLR_RESET}:${CLR_YELLOW}" "${default_bind_mounts[@]}" "${CLR_RESET}"
+  echo -e "* ${CLR_BLUE}dev_bind_mounts${CLR_RESET}:${CLR_YELLOW}" "${dev_bind_mounts[@]}" "${CLR_RESET}"
+  echo -e "* ${CLR_BLUE}default_args${CLR_RESET}:${CLR_YELLOW}" "${default_args[@]}" "${CLR_RESET}"
+  echo -e "* ${CLR_BLUE}devmode${CLR_RESET}:${CLR_YELLOW}" "${devmode}" "${CLR_RESET}"
 }
 
 run_update() {
@@ -42,7 +52,7 @@ run_update() {
   echo -e "Updating the Docker image..."
   run_docker_build || return $?
   echo -e "...done."
-  echo -e "\e[94mtelescope-devkit\e[0m has been updated."
+  echo -e "\e[94mtelescope-devkit${CLR_RESET} has been updated."
 }
 
 run_docker_build() {
@@ -51,7 +61,7 @@ run_docker_build() {
 
 run_docker_shell() {
   if [ "true" = "${devmode}" ]; then
-    echo -e "\e[33mRunning in development mode.\e[0m"
+    echo -e "\e[33mRunning in development mode.${CLR_RESET}"
     docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
   else
     docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
@@ -61,7 +71,7 @@ run_docker_shell() {
 
 run_default() {
   if [ "true" = "${devmode}" ]; then
-    echo -e "\e[33mRunning in development mode.\e[0m"
+    echo -e "\e[33mRunning in development mode.${CLR_RESET}"
     docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
   else
     docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" ${docker_image_name} "$@"
@@ -69,15 +79,17 @@ run_default() {
   return $?
 }
 
-echo "default_bind_mounts : ${default_bind_mounts[@]}"
-echo "dev_bind_mounts : ${dev_bind_mounts[@]}"
-echo "default_args : ${default_args[@]}"
+
 # exit
 
 if [ $# -ge 1 ]; then
   case $1 in
     "app-build")
       run_docker_build
+      exit $?
+      ;;
+    "app-debug")
+      run_app_debug
       exit $?
       ;;
     "app-shell")
