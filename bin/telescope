@@ -29,7 +29,7 @@ dev_bind_mounts=(--mount type=bind,source="$(pwd)",target=/app)
 
 git_update() {
   cd "$(get_source_dir)" || return 1
-  main_branch="master"
+  main_branch="main"
   active_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ "${main_branch}" != "${active_branch}" ]; then
     echo -e "${CLR_HI_RED}ERROR: Unable to update as the Git repo is not on the '${main_branch}' branch. Current branch is '${active_branch}'.${CLR_RESET}"
