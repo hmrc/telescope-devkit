@@ -98,6 +98,11 @@ Status report:
 * Outcome: Environment is not healthy.
 ```
 
+You can turn on debug log output to log/<env>-checklist.log by using the following flag:
+
+```shell
+export TELESCOPE_DEVKIT_DEVMODE=true
+```
 
 
 You can list the available migration phases with:
