@@ -224,12 +224,36 @@ class ElasticSearchIngest(Check):
 
         return round(float(data[0]["datapoints"][0][0]), 2)
 
+    def _get_indexing_rate_from_mdtp(self):
+        account_name = str(self.sts.account_name)
+        grafana = Grafana(
+            hostname=f"grafana.{account_name}.telemetry.tax.service.gov.uk",
+            ssm_path="/telemetry/secrets/grafana/migration_api_key",
+        )
+        # get environment cidr A&B
+        ec2 = Ec2()
+        instance = ec2.get_instance_by_name(
+            name="elasticsearch-query", enable_wildcard=False
+        )
+        ip_blocks = instance.private_ip_address.split(".")
+        ip_filter = f"ip-{ip_blocks[0]}-{ip_blocks[1]}-"
+
+        metric_query = f"averageSeries(sumSeries(removeEmptySeries(perSecond(collectd.elasticsearch-data*{ip_filter}*.es-default.gauge-index.docs.count))))&from=-{self._indexing_rate_period}&until=now&format=json&maxDataPoints=1"
+        data = grafana.get_metric_value(metric_query=metric_query)
+        if not data:
+            raise Exception(
+                f"No datapoints available for metrics query '{metric_query}'"
+            )
+
+        return round(float(data[0]["datapoints"][0][0]), 2)
+
     def check(self):
         self.logger.info(f"Check: {self._description}")
 
         try:
             webops_indexing_rate = self._get_indexing_rate_from_webops()
-            tnt_indexing_rate = self._get_indexing_rate_from_tnt()
+            # tnt_indexing_rate = self._get_indexing_rate_from_tnt()
+            mdtp_indexing_rate = self._get_indexing_rate_from_mdtp()
         except ClientError as e:
             self.logger.debug(e)
             self._is_successful = False
@@ -240,10 +264,15 @@ class ElasticSearchIngest(Check):
             return
 
         rate_difference = round(
-            (abs(webops_indexing_rate - tnt_indexing_rate) / webops_indexing_rate)
+            (abs(webops_indexing_rate - mdtp_indexing_rate) / webops_indexing_rate)
             * 100,
             2,
         )
+
+        self.logger.debug(f"Indexing rate in WebOps is {webops_indexing_rate}")
+        self.logger.debug(f"Indexing rate in MDTP is {mdtp_indexing_rate}")
+        self.logger.debug(f"Indexing rate difference is {rate_difference}%")
+        
         if rate_difference < self._rate_diff_threshold:
             self._is_successful = True
         else:
@@ -251,7 +280,8 @@ class ElasticSearchIngest(Check):
                 "The difference between elasticsearch ingest in webops compared to NWT is above threshold"
             )
             self.logger.debug(f"Indexing rate in WebOps is {webops_indexing_rate}")
-            self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
+            #self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
+            self.logger.debug(f"Indexing rate in MDTP is {mdtp_indexing_rate}")
             self.logger.debug(f"Indexing rate difference is {rate_difference}%")
             self._is_successful = False
 
