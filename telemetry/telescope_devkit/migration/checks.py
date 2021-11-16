@@ -272,7 +272,7 @@ class ElasticSearchIngest(Check):
         self.logger.debug(f"Indexing rate in WebOps is {webops_indexing_rate}")
         self.logger.debug(f"Indexing rate in MDTP is {mdtp_indexing_rate}")
         self.logger.debug(f"Indexing rate difference is {rate_difference}%")
-        
+
         if rate_difference < self._rate_diff_threshold:
             self._is_successful = True
         else:
@@ -421,14 +421,6 @@ class MetricsDataIsValid(Check):
 
 class SensuChecksAreRunningInWebops(Check):
     _description = "Sensu checks are still running in WebOps"
-    _requires_manual_intervention = True
-
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
-
-
-class InitialAlertsAreRunningInNwt(Check):
-    _description = "Initial NWT alert(s) is running in NWT"
     _requires_manual_intervention = True
 
     def check_interactively(self):

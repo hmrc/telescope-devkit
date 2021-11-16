@@ -97,7 +97,6 @@ class Phase2PreCutoverCli(MigrationChecklist):
             LogsDataIsValid(),
             MetricsDataIsValid(),
             SensuChecksAreRunningInWebops(),
-            InitialAlertsAreRunningInNwt(),
         ]
 
     def list(self):
