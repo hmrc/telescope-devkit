@@ -23,5 +23,5 @@ class CodebuildCli(object):
 
     def deploy_grafana_dashboards(self):
         self._console.print("Deploying Grafana dashboards...")
-        result = self._codebuild.start_build("grafana-dashboards-deploy")
+        result = self._codebuild.start_build("deploy-grafana-dashboards")
         self._console.print(result)
