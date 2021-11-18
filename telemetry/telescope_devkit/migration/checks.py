@@ -439,7 +439,7 @@ class NwtPublicWebUisRedirectFromWebops(Check):
             f"https://grafana.tools.{self.sts.webops_account_name}.tax.service.gov.uk"
         )
         try:
-            grafana_major_version = "7"
+            grafana_major_version = "8"
             self.logger.debug(f"Fetching HTML content from {grafana_url}")
             r = requests.get(grafana_url)
             match = re.search(
@@ -467,15 +467,6 @@ class NwtPublicWebUisRedirectFromWebops(Check):
         except Exception as e:
             self.logger.debug(e)
             return False
-
-
-class SensuChecksAreRunningInNwt(Check):
-    _description = "Sensu checks are now running in NWT"
-    _requires_manual_intervention = True
-
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
-
 
 class WebopsEc2InstancesHaveBeenDecommissioned(Check):
     _description = "The following are no longer running in WebOps: ClickHouse, Elasticsearch-Data, Elasticsearch-Data-Warm, Elasticsearch-Query, Kibana, Grafana"
