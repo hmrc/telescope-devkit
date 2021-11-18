@@ -468,15 +468,6 @@ class NwtPublicWebUisRedirectFromWebops(Check):
             self.logger.debug(e)
             return False
 
-
-class SensuChecksAreRunningInNwt(Check):
-    _description = "Sensu checks are now running in NWT"
-    _requires_manual_intervention = True
-
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
-
-
 class WebopsEc2InstancesHaveBeenDecommissioned(Check):
     _description = "The following are no longer running in WebOps: ClickHouse, Elasticsearch-Data, Elasticsearch-Data-Warm, Elasticsearch-Query, Kibana, Grafana"
     _requires_manual_intervention = False
