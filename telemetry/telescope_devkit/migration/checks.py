@@ -439,7 +439,7 @@ class NwtPublicWebUisRedirectFromWebops(Check):
             f"https://grafana.tools.{self.sts.webops_account_name}.tax.service.gov.uk"
         )
         try:
-            grafana_major_version = "7"
+            grafana_major_version = "8"
             self.logger.debug(f"Fetching HTML content from {grafana_url}")
             r = requests.get(grafana_url)
             match = re.search(

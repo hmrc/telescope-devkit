@@ -114,8 +114,10 @@ class Phase2PostCutoverCli(MigrationChecklist):
         self._checklist = [
             KafkaConsumption(),
             NwtPublicWebUisRedirectFromWebops(),
-            SensuChecksAreRunningInWebops(),
-            SensuChecksAreRunningInNwt(),
+            SensuChecksAreRunningInWebops()
+            
+            # removed for now as no longer relevant
+            # SensuChecksAreRunningInNwt(),
         ]
 
     def list(self):
