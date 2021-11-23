@@ -73,6 +73,12 @@ aws-profile -p telemetry-internal-telemetry-RoleTelemetryEngineer bin/telescope 
 
 This repo provides a checklist comprised of automated and interactive checks for the migration from Webops to the NWT environments.
 
+You can turn on debug log output to log/<env>-checklist.log by using the following flag:
+
+```shell
+export TELESCOPE_DEVKIT_DEVMODE=true
+```
+
 For each migration phase you can run the checks by using the corresponding AWS profile and invoking the `migration <phase-name> check` command:
 
 ```shell
@@ -97,13 +103,6 @@ Status report:
 * Checks: 2 successful, 4 failed.
 * Outcome: Environment is not healthy.
 ```
-
-You can turn on debug log output to log/<env>-checklist.log by using the following flag:
-
-```shell
-export TELESCOPE_DEVKIT_DEVMODE=true
-```
-
 
 You can list the available migration phases with:
 ```shell
