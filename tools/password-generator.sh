@@ -9,4 +9,8 @@ else
   password_length=$default_password_length
 fi
 
-cat /dev/urandom | tr -dc '_A-Z-a-z-0-9' | fold -w $password_length | head -n 1
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  LC_ALL=C < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${password_length}
+else
+  cat /dev/urandom | tr -dc '_A-Z-a-z-0-9' | fold -w $password_length | head -n 1
+fi
