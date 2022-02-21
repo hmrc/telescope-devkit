@@ -19,12 +19,12 @@ if [ $# -le 3 ]; then
      echo -e "${CLR_RED}Usage: $(basename $0) <metric_path> <from> <to> <value> <limit:1000>${CLR_RESET}"
      echo -e "\nExample:\n  ${CLR_YELLOW}$(basename $0) 'collectd.graphite-frontend-ip-172-26-160-80.uptime.uptime' '2021-01-31 09:30:00' '2021-01-31 09:55:00' 10${CLR_RESET}"
 
-     exit -1
+     exit 1
 fi
 
 metric_path=$1
-lower_time_boundary=`date -d "$2" +"%s"`
-upper_time_boundary=`date -d "$3" +"%s"`
+lower_time_boundary=$(date -d "$2" +"%s")
+upper_time_boundary=$(date -d "$3" +"%s")
 new_value=$4
 limit=${5:-1000}
 
