@@ -28,10 +28,10 @@ upper_time_boundary=$(date -d "$3" +"%s")
 new_value=$4
 limit=${5:-1000}
 
-where_sql="WHERE (Path LIKE '${metric_path}') AND (Timestamp >= ${lower_time_boundary}) AND (Timestamp <= ${upper_time_boundary})"
+where_sql="WHERE (Path = '${metric_path}') AND (Time >= ${lower_time_boundary}) AND (Time <= ${upper_time_boundary})"
 
 echo -e "\nFirst check which records would be updated with:"
-echo -e "  ${CLR_YELLOW}SELECT * from graphite.graphite ${where_sql} LIMIT ${limit}${CLR_RESET}"
+echo -e "  ${CLR_YELLOW}SELECT * from graphite.graphite_distributed ${where_sql} LIMIT ${limit}${CLR_RESET}"
 
 # See https://clickhouse.com/docs/en/sql-reference/statements/alter/update/
 # NOTE: Each ALTER statement runs asynchronously
