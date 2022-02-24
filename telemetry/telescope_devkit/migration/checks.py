@@ -99,7 +99,7 @@ class TerraformBuild(Check):
         latest_build_status = codebuild.get_terraform_build_status(latest_build_id, session)
         self.logger.debug(f"Latest Terraform build status = {latest_build_status}")
 
-        if latest_build_status == "SUCCEEDED1":
+        if latest_build_status == "SUCCEEDED":
             self._is_successful = True
             return
 
