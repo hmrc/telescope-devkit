@@ -54,6 +54,6 @@ poetry-install: ## Install the dependencies as according to the pyproject.toml f
 
 install: app-build ## Build Docker image and install a `telescope` symlink in /usr/local/bin
 	@echo "Run the following command to create a symlink"
-	@echo "sudo ln -sfn ${ROOT_DIR}/bin/telescope /usr/local/bin/telescope"
+	@echo "sudo ln -sfn ${ROOT_DIR}bin/telescope /usr/local/bin/telescope"
 	@echo "or add bin/telescope to your PATH"
 .PHONY: install
