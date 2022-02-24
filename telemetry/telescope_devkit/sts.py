@@ -53,6 +53,12 @@ class Sts(object):
 
         return Session(profile_name=profile)
 
+    @staticmethod
+    def start_internal_base_engineer_role_session() -> Session:
+        profile = f"telemetry-internal-base-RoleTelemetryEngineer"
+
+        return Session(profile_name=profile)
+
 
 def load_aws_accounts() -> dict:
     with open(os.path.join(get_repo_path(), "data/aws-accounts.json")) as json_file:

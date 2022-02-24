@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from rich.prompt import Prompt
 
 from telemetry.telescope_devkit.cli import get_console
+from telemetry.telescope_devkit.codebuild import Codebuild
 from telemetry.telescope_devkit.ec2 import Ec2
 from telemetry.telescope_devkit.logger import create_file_logger, get_file_logger
 from telemetry.telescope_devkit.grafana import Grafana
@@ -81,18 +82,26 @@ class Check(object):
 
 
 class TerraformBuild(Check):
-    _description = "Terraform Build job is green"
-    _requires_manual_intervention = True
+    _description = "Terraform CodeBuild project is green"
 
     def check(self):
-        pass
+        self.logger.info(f"Check: {self._description}")
+        codebuild = Codebuild()
+        session = Sts().start_internal_base_engineer_role_session()
 
-    def check_interactively(self):
-        self._console.print(
-            f"""  Visit https://eu-west-2.console.aws.amazon.com/codesuite/codebuild/634456480543/projects/build-telemetry-{get_account_name()}-terraform/history?region=eu-west-2
-  and inspect the result of the last Terraform run."""
+        self._is_successful = False
+
+        latest_build_id = codebuild.get_latest_terraform_build_id(
+            f"build-telemetry-{get_account_name()}-terraform",
+            session
         )
-        self.launch_manual_intervention_prompt()
+        self.logger.debug(f"Latest Terraform build identifier = {latest_build_id}")
+        latest_build_status = codebuild.get_terraform_build_status(latest_build_id, session)
+        self.logger.debug(f"Latest Terraform build status = {latest_build_status}")
+
+        if latest_build_status == "SUCCEEDED1":
+            self._is_successful = True
+            return
 
 
 class EcsStatusChecks(Check):
@@ -164,7 +173,7 @@ class KafkaConsumption(Check):
                 self._is_successful = False
                 return
 
-        # Validate that all consumers are up to date
+        # Validate that all consumers are up-to-date
         msk_consumer_groups = ["logs"]
         msk_log_retention_period = "1h"
         lag_threshold = 90
