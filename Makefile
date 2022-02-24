@@ -12,7 +12,7 @@ help: ## The help text you're reading
 .PHONY: help
 
 # Python targets:
-bandit: ## Run bandit against environment_builder python code (ignoring low severity)
+bandit: ## Run bandit against telescope_devkit python code (ignoring low severity)
 	poetry run bandit -ll ./telemetry/telescope_devkit/*.py
 .PHONY: bandit
 
