@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from rich.prompt import Prompt
 
 from telemetry.telescope_devkit.cli import get_console
+from telemetry.telescope_devkit.codebuild import Codebuild
 from telemetry.telescope_devkit.ec2 import Ec2
 from telemetry.telescope_devkit.logger import create_file_logger, get_file_logger
 from telemetry.telescope_devkit.grafana import Grafana
@@ -81,18 +82,26 @@ class Check(object):
 
 
 class TerraformBuild(Check):
-    _description = "Terraform Build job is green"
-    _requires_manual_intervention = True
+    _description = "Terraform CodeBuild project is green"
 
     def check(self):
-        pass
+        self.logger.info(f"Check: {self._description}")
+        codebuild = Codebuild()
+        session = Sts().start_internal_base_engineer_role_session()
 
-    def check_interactively(self):
-        self._console.print(
-            f"""  Visit https://eu-west-2.console.aws.amazon.com/codesuite/codebuild/634456480543/projects/build-telemetry-{get_account_name()}-terraform/history?region=eu-west-2
-  and inspect the result of the last Terraform run."""
+        self._is_successful = False
+
+        latest_build_id = codebuild.get_latest_terraform_build_id(
+            f"build-telemetry-{get_account_name()}-terraform",
+            session
         )
-        self.launch_manual_intervention_prompt()
+        self.logger.debug(f"Latest Terraform build identifier = {latest_build_id}")
+        latest_build_status = codebuild.get_terraform_build_status(latest_build_id, session)
+        self.logger.debug(f"Latest Terraform build status = {latest_build_status}")
+
+        if latest_build_status == "SUCCEEDED":
+            self._is_successful = True
+            return
 
 
 class EcsStatusChecks(Check):
@@ -102,7 +111,7 @@ class EcsStatusChecks(Check):
         self.logger.info(f"Check: {self._description}")
 
         ec2 = Ec2()
-        instance = ec2.get_instance_by_name(name="telemetry", enable_wildcard=False)
+        instance = ec2.get_instance_by_name(name="telemetry-ecs", enable_wildcard=False)
         if not instance:
             self.logger.debug(
                 "There are no ECS telemetry running instances in this environment"
@@ -148,7 +157,7 @@ class KafkaConsumption(Check):
 
         # Validate that all partitions have an offset greater than 0
         self.logger.debug("Validate that all partitions have an offset greater than 0")
-        metric_query = "aliasByNode(telemetry.telescope.msk.metrics.*.offset%2C%204)&from=-5min&until=now&format=json&maxDataPoints=1"
+        metric_query = "aliasByNode(telemetry.telescope.msk.logs.partition_*.offset%2C%204)&from=-5min&until=now&format=json&maxDataPoints=1"
         try:
             data = grafana.get_metric_value(metric_query=metric_query)
         except Exception as e:
@@ -164,8 +173,8 @@ class KafkaConsumption(Check):
                 self._is_successful = False
                 return
 
-        # Validate that all consumers are up to date
-        msk_consumer_groups = ["metrics", "logs"]
+        # Validate that all consumers are up-to-date
+        msk_consumer_groups = ["logs"]
         msk_log_retention_period = "1h"
         lag_threshold = 90
         for msk_consumer_group in msk_consumer_groups:

@@ -30,7 +30,7 @@ Assuming that `/usr/local/bin` is in your `PATH` then just launch the binary as:
 
 ```shell
 telescope
- 
+
 NAME
     telescope
 

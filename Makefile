@@ -11,6 +11,15 @@ help: ## The help text you're reading
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
+# Python targets:
+bandit: ## Run bandit against environment_builder python code (ignoring low severity)
+	poetry run bandit -ll ./telemetry/telescope_devkit/*.py
+.PHONY: bandit
+
+black: ## Run black against telescope_devkit python code
+	poetry run black ./telemetry/telescope_devkit/*.py
+.PHONY: black
+
 # Docker targets:
 
 app-build: ## Build the telescope-devkit Docker image

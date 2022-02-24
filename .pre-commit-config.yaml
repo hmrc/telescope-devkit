@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: no-commit-to-branch
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-json
+      - id: check-yaml
+        exclude: (kitchen.yml)
+      - id: detect-private-key
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: repository.yaml
+  - repo: https://github.com/hmrc/security-git-hooks
+    rev: release/1.8.0
+    hooks:
+      - id: secrets_filecontent
+        name: Checking staged files for sensitive content
+      - id: secrets_filename
+        name: Checking staged files for sensitive file types
