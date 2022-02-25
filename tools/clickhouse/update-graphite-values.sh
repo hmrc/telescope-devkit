@@ -23,12 +23,17 @@ if [ $# -le 3 ]; then
 fi
 
 metric_path=$1
-lower_time_boundary=$(date -d "$2" +"%s")
-upper_time_boundary=$(date -d "$3" +"%s")
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  lower_time_boundary=$(date -j -f "%Y-%m-%d %H:%M:%S" "$2" "+%s")
+  upper_time_boundary=$(date -j -f "%Y-%m-%d %H:%M:%S" "$3" "+%s")
+else
+  lower_time_boundary=$(date -d "$2" +"%s")
+  upper_time_boundary=$(date -d "$3" +"%s")
+fi
 new_value=$4
-limit=${5:-1000}
+limit=${5:-10}
 
-where_sql="WHERE (Path = '${metric_path}') AND (Time >= ${lower_time_boundary}) AND (Time <= ${upper_time_boundary})"
+where_sql="WHERE (Path LIKE '${metric_path}') AND (Time >= ${lower_time_boundary}) AND (Time <= ${upper_time_boundary})"
 
 echo -e "\nFirst check which records would be updated with:"
 echo -e "  ${CLR_YELLOW}SELECT * from graphite.graphite_distributed ${where_sql} LIMIT ${limit}${CLR_RESET}"
