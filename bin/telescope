@@ -19,7 +19,9 @@ ssh_path=${HMRC_SSH_CONFIG_PATH:-$HOME/.ssh}
 aws_path=${AWS_CONFIG_PATH:-$HOME/.aws}
 docker_image_name="mdtp-telemetry/telescope-devkit:latest"
 docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
-devmode=${TELESCOPE_DEVKIT_DEVMODE:-false}
+dev_mode=${TELESCOPE_DEVKIT_DEVMODE:-false}
+# shellcheck disable=SC2054
+default_env_vars=(--env TELESCOPE_DEVKIT_DOCKER_MODE=True)
 # shellcheck disable=SC2054
 default_bind_mounts=(--mount type=bind,source="${ssh_path}",target=/root/.ssh_host --mount type=bind,source="${aws_path}",target=/root/.aws)
 # shellcheck disable=SC2054
@@ -44,7 +46,7 @@ run_app_debug() {
   echo -e "* ${CLR_BLUE}default_bind_mounts${CLR_RESET}:${CLR_YELLOW}" "${default_bind_mounts[@]}" "${CLR_RESET}"
   echo -e "* ${CLR_BLUE}dev_bind_mounts${CLR_RESET}:${CLR_YELLOW}" "${dev_bind_mounts[@]}" "${CLR_RESET}"
   echo -e "* ${CLR_BLUE}default_args${CLR_RESET}:${CLR_YELLOW}" "${default_args[@]}" "${CLR_RESET}"
-  echo -e "* ${CLR_BLUE}devmode${CLR_RESET}:${CLR_YELLOW}" "${devmode}" "${CLR_RESET}"
+  echo -e "* ${CLR_BLUE}dev_mode${CLR_RESET}:${CLR_YELLOW}" "${dev_mode}" "${CLR_RESET}"
 }
 
 run_update() {
@@ -52,7 +54,7 @@ run_update() {
   echo -e "Updating the Docker image..."
   run_docker_build || return $?
   echo -e "...done."
-  echo -e "\e[94mtelescope-devkit${CLR_RESET} has been updated."
+  echo -e "${CLR_HI_BLUE}telescope-devkit${CLR_RESET} has been updated."
 }
 
 run_docker_build() {
@@ -60,21 +62,21 @@ run_docker_build() {
 }
 
 run_docker_shell() {
-  if [ "true" = "${devmode}" ]; then
-    echo -e "\e[33mRunning in development mode.${CLR_RESET}"
-    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+  if [ "true" = "${dev_mode}" ]; then
+    echo -e "${CLR_YELLOW}Running in development mode.${CLR_RESET}"
+    docker run ${docker_aws_env_vars} "${default_env_vars[@]}" --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
   else
-    docker run ${docker_aws_env_vars} --rm "${default_bind_mounts[@]}" "${default_args[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
+    docker run ${docker_aws_env_vars} "${default_env_vars[@]}" --rm "${default_bind_mounts[@]}" "${default_args[@]}" -it --entrypoint=/bin/bash ${docker_image_name}
   fi
   return $?
 }
 
 run_default() {
-  if [ "true" = "${devmode}" ]; then
-    echo -e "\e[33mRunning in development mode.${CLR_RESET}"
-    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
+  if [ "true" = "${dev_mode}" ]; then
+    echo -e "${CLR_YELLOW}Running in development mode.${CLR_RESET}"
+    docker run ${docker_aws_env_vars} "${default_env_vars[@]}" -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" "${dev_bind_mounts[@]}" ${docker_image_name} "$@"
   else
-    docker run ${docker_aws_env_vars} -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" ${docker_image_name} "$@"
+    docker run ${docker_aws_env_vars} "${default_env_vars[@]}" -it --rm "${default_bind_mounts[@]}" "${default_args[@]}" ${docker_image_name} "$@"
   fi
   return $?
 }

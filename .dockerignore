@@ -1,4 +1,7 @@
 .git
 .gitignore
+.idea
+.venv
+log/
 __pycache__
 Dockerfile

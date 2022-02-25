@@ -12,7 +12,7 @@ help: ## The help text you're reading
 .PHONY: help
 
 # Python targets:
-bandit: ## Run bandit against environment_builder python code (ignoring low severity)
+bandit: ## Run bandit against telescope_devkit python code (ignoring low severity)
 	poetry run bandit -ll ./telemetry/telescope_devkit/*.py
 .PHONY: bandit
 
@@ -54,6 +54,6 @@ poetry-install: ## Install the dependencies as according to the pyproject.toml f
 
 install: app-build ## Build Docker image and install a `telescope` symlink in /usr/local/bin
 	@echo "Run the following command to create a symlink"
-	@echo "sudo ln -sfn ${ROOT_DIR}/bin/telescope /usr/local/bin/telescope"
+	@echo "sudo ln -sfn ${ROOT_DIR}bin/telescope /usr/local/bin/telescope"
 	@echo "or add bin/telescope to your PATH"
 .PHONY: install

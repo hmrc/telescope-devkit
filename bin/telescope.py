@@ -19,7 +19,7 @@ commands = {
     'ec2': Ec2Cli,
     'elasticsearch': ElasticsearchCli,
     'logs': LogsCli,
-    'migration' : {
+    'migration': {
         'phase-1': Phase1Cli,
         'phase-2-pre-cutover': Phase2PreCutoverCli,
         'phase-2-post-cutover': Phase2PostCutoverCli,
@@ -28,12 +28,18 @@ commands = {
     'sts': StsCli
 }
 
+
 def is_running_in_docker() -> bool:
+    docker_mode = os.environ.get('TELESCOPE_DEVKIT_DOCKER_MODE', False)
+    if docker_mode:
+        return True
+
     if not os.path.isfile('/proc/1/cgroup'):
         return False
 
     with open('/proc/1/cgroup', 'rt') as ifh:
         return 'docker' in ifh.read()
+
 
 def setup_ssh_config():
     if not isdir("/root/.ssh"):
