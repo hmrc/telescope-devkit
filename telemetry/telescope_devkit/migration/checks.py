@@ -1,13 +1,13 @@
 import datetime
 import json
 import shlex
-import subprocess
 from json.decoder import JSONDecodeError
 
 import re
 import requests
 from botocore.exceptions import ClientError
 from rich.prompt import Prompt
+from subprocess import Popen, PIPE
 
 from telemetry.telescope_devkit.cli import get_console
 from telemetry.telescope_devkit.codebuild import Codebuild
@@ -30,6 +30,25 @@ def create_migration_checklist_logger():
 
 def get_migration_checklist_logger():
     return get_file_logger("migration")
+
+
+def get_epoch_start_and_end_times(from_minutes_ago=15, to_minutes_ago=10):
+    now = datetime.datetime.now()
+    from_timestamp = int(
+        (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
+    )
+    to_timestamp = int(
+        (now - datetime.timedelta(minutes=to_minutes_ago)).timestamp()
+    )
+    return from_timestamp, to_timestamp
+
+
+def get_percentage_diff(previous, current):
+    try:
+        percentage = abs(previous - current)/max(previous, current) * 100
+    except ZeroDivisionError:
+        percentage = float('inf')
+    return percentage
 
 
 class NotImplementedException(Exception):
@@ -289,7 +308,7 @@ class ElasticSearchIngest(Check):
                 "The difference between elasticsearch ingest in webops compared to NWT is above threshold"
             )
             self.logger.debug(f"Indexing rate in WebOps is {webops_indexing_rate}")
-            #self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
+            # self.logger.debug(f"Indexing rate in NWT is {tnt_indexing_rate}")
             self.logger.debug(f"Indexing rate in MDTP is {mdtp_indexing_rate}")
             self.logger.debug(f"Indexing rate difference is {rate_difference}%")
             self._is_successful = False
@@ -369,6 +388,68 @@ class LogsDataIsValid(Check):
         return self.launch_manual_intervention_prompt()
 
 
+class ClickhouseMetricsChecks(Check):
+    _description = "Metrics data ingested in NWT matches WebOps"
+    _requires_manual_intervention = False
+
+    def check(self):
+        self.logger.info(f"Check: {self._description}")
+
+        start_time, end_time = get_epoch_start_and_end_times()
+        self.logger.debug(f"Start Time: {start_time}")
+        self.logger.debug(f"End Time: {end_time}")
+
+        nwt_account_name = str(self.sts.account_name)
+        webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
+        clickhouse_query = f"echo \"SELECT COUNT(*) FROM graphite.graphite_distributed WHERE Time > {start_time} and " \
+                           f"Time < {end_time}\" | clickhouse client "
+
+        # Get metric count from NWT environment
+        nwt_ec2 = Ec2()
+        nwt_metric_count = self._get_metric_ingest_count(nwt_ec2, clickhouse_query, nwt_account_name)
+        if nwt_metric_count is None:
+            self._is_successful = False
+            return
+
+        # Get metric count from WebOps environment
+        webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+        webops_metric_count = self._get_metric_ingest_count(webops_ec2, clickhouse_query, webops_account_name)
+        if webops_metric_count is None:
+            self._is_successful = False
+            return
+
+        try:
+            percentage_difference = get_percentage_diff(nwt_metric_count, webops_metric_count)
+            self.logger.debug(f"Percentage difference: {percentage_difference}")
+
+            if percentage_difference <= 3:
+                self.logger.debug("Metrics ingested within 3%")
+                self._is_successful = True
+            else:
+                self.logger.debug("Metrics ingested greater than 3%")
+                self._is_successful = False
+        except Exception as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
+
+    def _get_metric_ingest_count(self, ec2_client, clickhouse_query, environment_name):
+        try:
+            instance = ec2_client.get_instance_by_name(name='clickhouse-server-shard_1', enable_wildcard=False)
+            if not instance:
+                self.logger.debug(f"There are no Clickhouse Shard 1 instances in {environment_name}")
+                return None
+
+            self.logger.debug(f"Getting metrics from Clickhouse in {environment_name}: {instance.private_ip_address}")
+            stdout, stderr = Popen(['ssh', instance.private_ip_address, clickhouse_query], stdout=PIPE).communicate()
+            return_value = int(stdout.decode('utf-8').strip())
+            self.logger.debug(f"Ingested metric count for {environment_name}: {return_value}")
+            return return_value
+        except Exception as e:
+            self.logger.debug(e)
+            return None
+
+
 class MetricsDataIsValid(Check):
     _description = "Metrics data in NWT is valid"
     _requires_manual_intervention = False
@@ -377,14 +458,8 @@ class MetricsDataIsValid(Check):
         self.logger.info(f"Check: {self._description}")
 
         from_minutes_ago = 15
-        to_minutes_ago = 10  # Allow a 10 minutes grace period:
-        now = datetime.datetime.now()
-        from_timestamp = int(
-            (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
-        )
-        to_timestamp = int(
-            (now - datetime.timedelta(minutes=to_minutes_ago)).timestamp()
-        )
+        to_minutes_ago = 10
+        from_timestamp, to_timestamp = get_epoch_start_and_end_times(from_minutes_ago, to_minutes_ago)
 
         max_data_points = from_minutes_ago - to_minutes_ago
         metric_query = f"alias(maximumAbove(group(averageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.heap.max%2C0%2C2)%2CaverageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.jvm.memory.heap.max%2C0%2C2))%2C0)%2C%20'Heap%20Max')&from={from_timestamp}&until={to_timestamp}&format=json&maxDataPoints={max_data_points}"
@@ -476,6 +551,7 @@ class NwtPublicWebUisRedirectFromWebops(Check):
         except Exception as e:
             self.logger.debug(e)
             return False
+
 
 class WebopsEc2InstancesHaveBeenDecommissioned(Check):
     _description = "The following are no longer running in WebOps: ClickHouse, Elasticsearch-Data, Elasticsearch-Data-Warm, Elasticsearch-Query, Kibana, Grafana"

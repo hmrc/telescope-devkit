@@ -10,7 +10,7 @@ from telemetry.telescope_devkit.codebuild import CodebuildCli
 from telemetry.telescope_devkit.ec2 import Ec2Cli
 from telemetry.telescope_devkit.elasticsearch import ElasticsearchCli
 from telemetry.telescope_devkit.logs import LogsCli
-from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase2PreCutoverCli, Phase2PostCutoverCli, Phase3Cli
+from telemetry.telescope_devkit.migration.cli import Phase1Cli, Phase1MetricsCli, Phase2PreCutoverCli, Phase2PostCutoverCli, Phase3Cli
 from telemetry.telescope_devkit.sts import StsCli
 
 commands = {
@@ -21,6 +21,7 @@ commands = {
     'logs': LogsCli,
     'migration': {
         'phase-1': Phase1Cli,
+        'phase-1-metrics': Phase1MetricsCli,
         'phase-2-pre-cutover': Phase2PreCutoverCli,
         'phase-2-post-cutover': Phase2PostCutoverCli,
         'phase-3': Phase3Cli

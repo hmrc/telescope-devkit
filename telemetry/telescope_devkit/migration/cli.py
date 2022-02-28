@@ -84,6 +84,22 @@ class Phase1Cli(MigrationChecklist):
         return self._check("Phase 1 checklist")
 
 
+class Phase1MetricsCli(MigrationChecklist):
+    def __init__(self):
+        super().__init__()
+        self._checklist = [
+            ClickhouseMetricsChecks(),
+        ]
+
+    def list(self):
+        """Display Phase 1 Metrics checks"""
+        self._list("Phase 1 Metrics checklist")
+
+    def check(self) -> int:
+        """Execute Phase 1 checks"""
+        return self._check("Phase 1 Metrics checklist")
+
+
 class Phase2PreCutoverCli(MigrationChecklist):
     def __init__(self):
         super().__init__()
