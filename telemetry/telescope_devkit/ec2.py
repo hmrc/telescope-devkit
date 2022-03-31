@@ -36,6 +36,20 @@ class Ec2(object):
         for instance in self.get_instances_by_name(name, enable_wildcard):
             return instance
 
+    def get_volume_by_filter(self, filter_name: str, filter_value: str):
+        for volume in self._ec2_resource_service_client.volumes.filter(
+            Filters=[
+                {"Name": filter_name, "Values": [filter_value]},
+            ]
+        ):
+            return volume
+
+    def generate_snapshot(self, description: str, volume_id: str):
+        snapshot = self._ec2_resource_service_client.create_snapshot(
+            Description=description, VolumeId=volume_id, DryRun=False
+        )
+        return snapshot
+
 
 class Ec2Cli(object):
     def __init__(self):

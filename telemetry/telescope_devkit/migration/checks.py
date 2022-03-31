@@ -473,10 +473,63 @@ class ClickhouseMetricsChecks(Check):
 
 class ClickhouseSnapshotGeneration(Check):
     _description = "Clickhouse Data Volume Snapshots Taken"
-    _requires_manual_intervention = True
+    _requires_manual_intervention = False
 
-    def check_interactively(self):
-        return self.launch_manual_intervention_prompt()
+    def check(self):
+        self.logger.info(f"Generate: {self._description}")
+        webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
+
+        try:
+            # Create snapshots in WebOps for both shards 1 & 2
+            webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+            shard_1_snapshot = self._generate_snapshot(webops_ec2, webops_account_name, "shard_1")
+            if shard_1_snapshot is None:
+                self._is_successful = False
+                return
+
+            shard_2_snapshot = self._generate_snapshot(webops_ec2, webops_account_name, "shard_2")
+            if shard_2_snapshot is None:
+                self._is_successful = False
+                return
+
+            self.logger.debug(shard_1_snapshot.snapshot_id)
+            self.logger.debug(shard_2_snapshot.snapshot_id)
+            self._is_successful = True
+        except Exception as e:
+            self.logger.debug(e)
+            self._is_successful = False
+            return
+
+    def _generate_snapshot(self, ec2_client, environment_name, shard):
+        try:
+            volume = ec2_client.get_volume_by_filter(
+                filter_name="tag:Component",
+                filter_value=f"clickhouse-server-{shard}"
+            )
+            if not volume:
+                self.logger.debug(
+                    f"There are no data volumes found for {shard} instances in {environment_name}"
+                )
+                return None
+
+            self.logger.debug(
+                f"Generating {shard} snapshot from Clickhouse in {environment_name}: "
+                f"{volume.id} ({volume.size} GiB) -> {volume.state}"
+            )
+
+            snapshot = ec2_client.generate_snapshot(
+                description=f"Manual snapshot taken for {shard}",
+                volume_id=volume.id
+            )
+
+            if not snapshot:
+                self.logger.debug(f"Snapshot was unsuccessful for {shard} in {environment_name}")
+                return None
+
+            return snapshot
+        except Exception as e:
+            self.logger.debug(e)
+            return None
 
 
 class MetricsDataIsValid(Check):
