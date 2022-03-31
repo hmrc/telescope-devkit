@@ -1,7 +1,5 @@
-import datetime
 from rich.table import Table
 
-from telemetry.telescope_devkit.cli import get_console
 from telemetry.telescope_devkit.migration.checks import *
 
 
@@ -146,7 +144,7 @@ class Phase2PostCutoverCli(MigrationChecklist):
         self._checklist = [
             KafkaConsumption(),
             NwtPublicWebUisRedirectFromWebops(),
-            SensuChecksAreRunningInWebops()
+            SensuChecksAreRunningInWebops(),
         ]
 
     def list(self):
@@ -164,7 +162,7 @@ class Phase3Cli(MigrationChecklist):
         self._checklist = [
             NwtPublicWebUisRedirectFromWebops(),
             WebopsEc2InstancesHaveBeenDecommissioned(),
-            SensuChecksAreRunningInWebops()
+            SensuChecksAreRunningInWebops(),
         ]
 
     def list(self):

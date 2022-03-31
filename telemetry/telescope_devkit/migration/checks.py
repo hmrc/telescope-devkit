@@ -1,21 +1,24 @@
 import datetime
 import json
+import re
 import shlex
 import subprocess
 from json.decoder import JSONDecodeError
+from subprocess import PIPE
+from subprocess import Popen
 
-import re
 import requests
 from botocore.exceptions import ClientError
 from rich.prompt import Prompt
-from subprocess import Popen, PIPE
 
 from telemetry.telescope_devkit.cli import get_console
 from telemetry.telescope_devkit.codebuild import Codebuild
 from telemetry.telescope_devkit.ec2 import Ec2
-from telemetry.telescope_devkit.logger import create_file_logger, get_file_logger
 from telemetry.telescope_devkit.grafana import Grafana
-from telemetry.telescope_devkit.sts import Sts, get_account_name
+from telemetry.telescope_devkit.logger import create_file_logger
+from telemetry.telescope_devkit.logger import get_file_logger
+from telemetry.telescope_devkit.sts import get_account_name
+from telemetry.telescope_devkit.sts import Sts
 
 
 def create_migration_checklist_logger():
@@ -38,17 +41,15 @@ def get_epoch_start_and_end_times(from_minutes_ago=15, to_minutes_ago=10):
     from_timestamp = int(
         (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
     )
-    to_timestamp = int(
-        (now - datetime.timedelta(minutes=to_minutes_ago)).timestamp()
-    )
+    to_timestamp = int((now - datetime.timedelta(minutes=to_minutes_ago)).timestamp())
     return from_timestamp, to_timestamp
 
 
 def get_percentage_diff(previous, current):
     try:
-        percentage = abs(previous - current)/max(previous, current) * 100
+        percentage = abs(previous - current) / max(previous, current) * 100
     except ZeroDivisionError:
-        percentage = float('inf')
+        percentage = float("inf")
     return percentage
 
 
@@ -112,11 +113,12 @@ class TerraformBuild(Check):
         self._is_successful = False
 
         latest_build_id = codebuild.get_latest_terraform_build_id(
-            f"build-telemetry-{get_account_name()}-terraform",
-            session
+            f"build-telemetry-{get_account_name()}-terraform", session
         )
         self.logger.debug(f"Latest Terraform build identifier = {latest_build_id}")
-        latest_build_status = codebuild.get_terraform_build_status(latest_build_id, session)
+        latest_build_status = codebuild.get_terraform_build_status(
+            latest_build_id, session
+        )
         self.logger.debug(f"Latest Terraform build status = {latest_build_status}")
 
         if latest_build_status == "SUCCEEDED":
@@ -402,25 +404,33 @@ class ClickhouseMetricsChecks(Check):
 
         nwt_account_name = str(self.sts.account_name)
         webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
-        clickhouse_query = f"echo \"SELECT COUNT(*) FROM graphite.graphite_distributed WHERE Time > {start_time} and " \
-                           f"Time < {end_time}\" | clickhouse client "
+        clickhouse_query = (
+            f'echo "SELECT COUNT(*) FROM graphite.graphite_distributed WHERE Time > {start_time} and '
+            f'Time < {end_time}" | clickhouse client '
+        )
 
         # Get metric count from NWT environment
         nwt_ec2 = Ec2()
-        nwt_metric_count = self._get_metric_ingest_count(nwt_ec2, clickhouse_query, nwt_account_name)
+        nwt_metric_count = self._get_metric_ingest_count(
+            nwt_ec2, clickhouse_query, nwt_account_name
+        )
         if nwt_metric_count is None:
             self._is_successful = False
             return
 
         # Get metric count from WebOps environment
         webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
-        webops_metric_count = self._get_metric_ingest_count(webops_ec2, clickhouse_query, webops_account_name)
+        webops_metric_count = self._get_metric_ingest_count(
+            webops_ec2, clickhouse_query, webops_account_name
+        )
         if webops_metric_count is None:
             self._is_successful = False
             return
 
         try:
-            percentage_difference = get_percentage_diff(nwt_metric_count, webops_metric_count)
+            percentage_difference = get_percentage_diff(
+                nwt_metric_count, webops_metric_count
+            )
             self.logger.debug(f"Percentage difference: {percentage_difference}")
 
             if percentage_difference <= 3:
@@ -436,15 +446,25 @@ class ClickhouseMetricsChecks(Check):
 
     def _get_metric_ingest_count(self, ec2_client, clickhouse_query, environment_name):
         try:
-            instance = ec2_client.get_instance_by_name(name='clickhouse-server-shard_1', enable_wildcard=False)
+            instance = ec2_client.get_instance_by_name(
+                name="clickhouse-server-shard_1", enable_wildcard=False
+            )
             if not instance:
-                self.logger.debug(f"There are no Clickhouse Shard 1 instances in {environment_name}")
+                self.logger.debug(
+                    f"There are no Clickhouse Shard 1 instances in {environment_name}"
+                )
                 return None
 
-            self.logger.debug(f"Getting metrics from Clickhouse in {environment_name}: {instance.private_ip_address}")
-            stdout, stderr = Popen(['ssh', instance.private_ip_address, clickhouse_query], stdout=PIPE).communicate()
-            return_value = int(stdout.decode('utf-8').strip())
-            self.logger.debug(f"Ingested metric count for {environment_name}: {return_value}")
+            self.logger.debug(
+                f"Getting metrics from Clickhouse in {environment_name}: {instance.private_ip_address}"
+            )
+            stdout, stderr = Popen(
+                ["ssh", instance.private_ip_address, clickhouse_query], stdout=PIPE
+            ).communicate()
+            return_value = int(stdout.decode("utf-8").strip())
+            self.logger.debug(
+                f"Ingested metric count for {environment_name}: {return_value}"
+            )
             return return_value
         except Exception as e:
             self.logger.debug(e)
@@ -468,7 +488,9 @@ class MetricsDataIsValid(Check):
 
         from_minutes_ago = 15
         to_minutes_ago = 10
-        from_timestamp, to_timestamp = get_epoch_start_and_end_times(from_minutes_ago, to_minutes_ago)
+        from_timestamp, to_timestamp = get_epoch_start_and_end_times(
+            from_minutes_ago, to_minutes_ago
+        )
 
         max_data_points = from_minutes_ago - to_minutes_ago
         metric_query = f"alias(maximumAbove(group(averageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.heap.max%2C0%2C2)%2CaverageSeriesWithWildcards(%7Bplay%2Cportal%7D.platform-status-frontend.*.jvm.memory.heap.max%2C0%2C2))%2C0)%2C%20'Heap%20Max')&from={from_timestamp}&until={to_timestamp}&format=json&maxDataPoints={max_data_points}"

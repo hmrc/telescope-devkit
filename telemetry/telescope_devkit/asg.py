@@ -1,7 +1,7 @@
 import boto3
+from rich.table import Table
 
 from telemetry.telescope_devkit.cli import get_console
-from rich.table import Table
 
 
 class Asg(object):

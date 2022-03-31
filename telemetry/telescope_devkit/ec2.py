@@ -1,12 +1,13 @@
 from typing import Union
 
 import boto3
-from mypy_boto3_ec2.service_resource import ServiceResourceInstancesCollection, Instance
-
+from mypy_boto3_ec2.service_resource import Instance
+from mypy_boto3_ec2.service_resource import ServiceResourceInstancesCollection
 from rich.table import Table
 
 from telemetry.telescope_devkit.cli import get_console
-from telemetry.telescope_devkit.ssh import ssh_to, LocalPortForwarding
+from telemetry.telescope_devkit.ssh import LocalPortForwarding
+from telemetry.telescope_devkit.ssh import ssh_to
 
 
 class Ec2(object):

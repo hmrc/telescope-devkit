@@ -1,7 +1,9 @@
 import logging
 import os
 
+from git import Head
 from git import Repo
+
 from telemetry.telescope_devkit.filesystem import get_repo_path
 
 GIT_DEFAULT_MAIN_BRANCH_NAME = "main"
@@ -25,7 +27,7 @@ class TelescopeDevkitGitRepo(object):
         return self.repo.git.describe(always=True)
 
     @property
-    def active_branch(self) -> str:
+    def active_branch(self) -> Head:
         return self.repo.active_branch
 
     def pull(self) -> None:

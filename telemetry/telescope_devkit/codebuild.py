@@ -11,12 +11,12 @@ class Codebuild(object):
     def get_latest_terraform_build_id(self, project_name: str, session: Session) -> str:
         codebuild_session = session.client("codebuild")
         builds = codebuild_session.list_builds_for_project(projectName=project_name)
-        return builds['ids'][0]
+        return builds["ids"][0]
 
     def get_terraform_build_status(self, project_id: str, session: Session) -> str:
         codebuild_session = session.client("codebuild")
         builds = codebuild_session.batch_get_builds(ids=[project_id])
-        return builds['builds'][0]['buildStatus']
+        return builds["builds"][0]["buildStatus"]
 
     def start_build(self, project_name: str):
         return self._client.start_build(projectName=project_name)
