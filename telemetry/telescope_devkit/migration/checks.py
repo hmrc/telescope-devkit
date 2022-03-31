@@ -483,14 +483,14 @@ class ClickhouseSnapshotGeneration(Check):
             # Create snapshots in WebOps for both shards 1 & 2
             webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
             shard_1_snapshot = self._generate_snapshot(
-                webops_ec2, webops_account_name, "shard_1"
+                webops_ec2, webops_account_name, "clickhouse-server-shard_1"
             )
             if shard_1_snapshot is None:
                 self._is_successful = False
                 return
 
             shard_2_snapshot = self._generate_snapshot(
-                webops_ec2, webops_account_name, "shard_2"
+                webops_ec2, webops_account_name, "clickhouse-server-shard_2"
             )
             if shard_2_snapshot is None:
                 self._is_successful = False
@@ -507,7 +507,7 @@ class ClickhouseSnapshotGeneration(Check):
     def _generate_snapshot(self, ec2_client, environment_name, shard):
         try:
             volume = ec2_client.get_volume_by_filter(
-                filter_name="tag:Component", filter_value=f"clickhouse-server-{shard}"
+                filter_name="tag:Component", filter_value=f"{shard}"
             )
             if not volume:
                 self.logger.debug(
