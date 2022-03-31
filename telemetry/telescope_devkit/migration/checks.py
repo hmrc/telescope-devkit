@@ -451,6 +451,14 @@ class ClickhouseMetricsChecks(Check):
             return None
 
 
+class ClickhouseSnapshotGeneration(Check):
+    _description = "Clickhouse Data Volume Snapshots Taken"
+    _requires_manual_intervention = True
+
+    def check_interactively(self):
+        return self.launch_manual_intervention_prompt()
+
+
 class MetricsDataIsValid(Check):
     _description = "Metrics data in NWT is valid"
     _requires_manual_intervention = False
