@@ -1,7 +1,5 @@
-import datetime
 from rich.table import Table
 
-from telemetry.telescope_devkit.cli import get_console
 from telemetry.telescope_devkit.migration.checks import *
 
 
@@ -100,6 +98,22 @@ class Phase1MetricsCli(MigrationChecklist):
         return self._check("Phase 1 Metrics checklist")
 
 
+class Phase1SnapshotCli(MigrationChecklist):
+    def __init__(self):
+        super().__init__()
+        self._checklist = [
+            ClickhouseSnapshotGeneration(),
+        ]
+
+    def list(self):
+        """Display Phase 1 Snapshot Generation"""
+        self._list("Phase 1 Snapshot Generation")
+
+    def check(self) -> int:
+        """Execute Phase 1 Snapshot Generation"""
+        return self._check("Phase 1 Snapshot Generation")
+
+
 class Phase2PreCutoverCli(MigrationChecklist):
     def __init__(self):
         super().__init__()
@@ -130,7 +144,7 @@ class Phase2PostCutoverCli(MigrationChecklist):
         self._checklist = [
             KafkaConsumption(),
             NwtPublicWebUisRedirectFromWebops(),
-            SensuChecksAreRunningInWebops()
+            SensuChecksAreRunningInWebops(),
         ]
 
     def list(self):
@@ -148,7 +162,7 @@ class Phase3Cli(MigrationChecklist):
         self._checklist = [
             NwtPublicWebUisRedirectFromWebops(),
             WebopsEc2InstancesHaveBeenDecommissioned(),
-            SensuChecksAreRunningInWebops()
+            SensuChecksAreRunningInWebops(),
         ]
 
     def list(self):

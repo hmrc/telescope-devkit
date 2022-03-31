@@ -1,9 +1,7 @@
 from telemetry.telescope_devkit import APP_NAME
 from telemetry.telescope_devkit.cli import get_console
-from telemetry.telescope_devkit.git import (
-    TelescopeDevkitGitRepo,
-    TelescopeDevkitGitRepoException,
-)
+from telemetry.telescope_devkit.git import TelescopeDevkitGitRepo
+from telemetry.telescope_devkit.git import TelescopeDevkitGitRepoException
 
 console = get_console()
 

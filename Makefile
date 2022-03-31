@@ -12,12 +12,12 @@ help: ## The help text you're reading
 .PHONY: help
 
 # Python targets:
-bandit: ## Run bandit against telescope_devkit python code (ignoring low severity)
-	poetry run bandit -ll ./telemetry/telescope_devkit/*.py
+bandit: ## Run bandit against telemetry python code (ignoring low severity)
+	poetry run bandit -ll ./telemetry/**/*.py -c .bandit
 .PHONY: bandit
 
-black: ## Run black against telescope_devkit python code
-	poetry run black ./telemetry/telescope_devkit/*.py
+black: ## Run black against telemetry python code
+	poetry run black ./telemetry/**/*.py
 .PHONY: black
 
 # Docker targets:

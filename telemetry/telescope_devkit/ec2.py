@@ -1,12 +1,13 @@
 from typing import Union
 
 import boto3
-from mypy_boto3_ec2.service_resource import ServiceResourceInstancesCollection, Instance
-
+from mypy_boto3_ec2.service_resource import Instance
+from mypy_boto3_ec2.service_resource import ServiceResourceInstancesCollection
 from rich.table import Table
 
 from telemetry.telescope_devkit.cli import get_console
-from telemetry.telescope_devkit.ssh import ssh_to, LocalPortForwarding
+from telemetry.telescope_devkit.ssh import LocalPortForwarding
+from telemetry.telescope_devkit.ssh import ssh_to
 
 
 class Ec2(object):
@@ -34,6 +35,20 @@ class Ec2(object):
     ) -> Union[Instance, None]:
         for instance in self.get_instances_by_name(name, enable_wildcard):
             return instance
+
+    def get_volume_by_filter(self, filter_name: str, filter_value: str):
+        for volume in self._ec2_resource_service_client.volumes.filter(
+            Filters=[
+                {"Name": filter_name, "Values": [filter_value]},
+            ]
+        ):
+            return volume
+
+    def generate_snapshot(self, description: str, volume_id: str):
+        snapshot = self._ec2_resource_service_client.create_snapshot(
+            Description=description, VolumeId=volume_id, DryRun=False
+        )
+        return snapshot
 
 
 class Ec2Cli(object):
