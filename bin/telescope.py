@@ -17,6 +17,7 @@ from telemetry.telescope_devkit.migration.cli import Phase1SnapshotCli
 from telemetry.telescope_devkit.migration.cli import Phase2PostCutoverCli
 from telemetry.telescope_devkit.migration.cli import Phase2PreCutoverCli
 from telemetry.telescope_devkit.migration.cli import Phase3Cli
+from telemetry.telescope_devkit.msk import MskCli
 from telemetry.telescope_devkit.sts import StsCli
 
 commands = {
@@ -33,6 +34,7 @@ commands = {
         "phase-2-post-cutover": Phase2PostCutoverCli,
         "phase-3": Phase3Cli,
     },
+    "msk": MskCli,
     "sts": StsCli,
 }
 
