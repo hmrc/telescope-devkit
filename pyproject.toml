@@ -9,14 +9,14 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-rich = "^9.10.0"
-fire = "^0.4.0"
-boto3 = "^1.21.0"
-boto3-stubs = {extras = ["ec2", "logs"], version = "^1.21.0"}
-GitPython = "^3.1.13"
+boto3 = "1.17.7"
+boto3-stubs = {extras = ["ec2", "logs"], version = "1.17.7"}
 docker = "^4.4.4"
+fire = "^0.4.0"
+GitPython = "^3.1.13"
+python = "^3.9"
 requests = "^2.25.1"
+rich = "9.10.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.2"

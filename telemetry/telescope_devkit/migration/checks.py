@@ -482,12 +482,16 @@ class ClickhouseSnapshotGeneration(Check):
         try:
             # Create snapshots in WebOps for both shards 1 & 2
             webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
-            shard_1_snapshot = self._generate_snapshot(webops_ec2, webops_account_name, "shard_1")
+            shard_1_snapshot = self._generate_snapshot(
+                webops_ec2, webops_account_name, "clickhouse-server-shard_1"
+            )
             if shard_1_snapshot is None:
                 self._is_successful = False
                 return
 
-            shard_2_snapshot = self._generate_snapshot(webops_ec2, webops_account_name, "shard_2")
+            shard_2_snapshot = self._generate_snapshot(
+                webops_ec2, webops_account_name, "clickhouse-server-shard_2"
+            )
             if shard_2_snapshot is None:
                 self._is_successful = False
                 return
@@ -503,8 +507,7 @@ class ClickhouseSnapshotGeneration(Check):
     def _generate_snapshot(self, ec2_client, environment_name, shard):
         try:
             volume = ec2_client.get_volume_by_filter(
-                filter_name="tag:Component",
-                filter_value=f"clickhouse-server-{shard}"
+                filter_name="tag:Component", filter_value=f"{shard}"
             )
             if not volume:
                 self.logger.debug(
@@ -518,12 +521,13 @@ class ClickhouseSnapshotGeneration(Check):
             )
 
             snapshot = ec2_client.generate_snapshot(
-                description=f"Manual snapshot taken for {shard}",
-                volume_id=volume.id
+                description=f"Manual snapshot taken for {shard}", volume_id=volume.id
             )
 
             if not snapshot:
-                self.logger.debug(f"Snapshot was unsuccessful for {shard} in {environment_name}")
+                self.logger.debug(
+                    f"Snapshot was unsuccessful for {shard} in {environment_name}"
+                )
                 return None
 
             return snapshot
