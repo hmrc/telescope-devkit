@@ -51,7 +51,7 @@ def get_percentage_diff(previous, current):
         percentage = abs(previous - current) / max(previous, current) * 100
     except ZeroDivisionError:
         percentage = float("inf")
-    return percentage
+    return int(percentage)
 
 
 class NotImplementedException(Exception):
@@ -436,7 +436,7 @@ class ClickhouseMetricsChecks(Check):
             percentage_difference = get_percentage_diff(
                 nwt_metric_count, webops_metric_count
             )
-            self.logger.debug(f"Percentage difference: {percentage_difference}")
+            self.logger.debug(f"Percentage difference: {percentage_difference}%")
 
             if percentage_difference <= 3:
                 self.logger.debug("Metrics ingested within 3%")
