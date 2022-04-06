@@ -38,11 +38,12 @@ def get_migration_checklist_logger():
 
 def get_epoch_start_and_end_times(from_minutes_ago=15, to_minutes_ago=10):
     now = datetime.datetime.now()
+    date_filter = now.strftime('%Y-%m-%d')
     from_timestamp = int(
         (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
     )
     to_timestamp = int((now - datetime.timedelta(minutes=to_minutes_ago)).timestamp())
-    return from_timestamp, to_timestamp
+    return date_filter, from_timestamp, to_timestamp
 
 
 def get_percentage_diff(previous, current):
@@ -50,7 +51,7 @@ def get_percentage_diff(previous, current):
         percentage = abs(previous - current) / max(previous, current) * 100
     except ZeroDivisionError:
         percentage = float("inf")
-    return percentage
+    return int(percentage)
 
 
 class NotImplementedException(Exception):
@@ -398,15 +399,19 @@ class ClickhouseMetricsChecks(Check):
     def check(self):
         self.logger.info(f"Check: {self._description}")
 
-        start_time, end_time = get_epoch_start_and_end_times()
+        date_filter, start_time, end_time = get_epoch_start_and_end_times()
+        self.logger.debug(f"Date: {date_filter}")
         self.logger.debug(f"Start Time: {start_time}")
         self.logger.debug(f"End Time: {end_time}")
 
         nwt_account_name = str(self.sts.account_name)
         webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
         clickhouse_query = (
-            f'echo "SELECT COUNT(*) FROM graphite.graphite_distributed WHERE Time > {start_time} and '
-            f'Time < {end_time}" | clickhouse client '
+            f'echo "SELECT COUNT(*) '
+            f'FROM graphite.graphite_distributed '
+            f'WHERE (Date = toDate(\'{date_filter}\')) '
+            f'AND (Time > {start_time})'
+            f'AND (Time < {end_time})" | clickhouse client '
         )
 
         # Get metric count from NWT environment
@@ -431,7 +436,7 @@ class ClickhouseMetricsChecks(Check):
             percentage_difference = get_percentage_diff(
                 nwt_metric_count, webops_metric_count
             )
-            self.logger.debug(f"Percentage difference: {percentage_difference}")
+            self.logger.debug(f"Percentage difference: {percentage_difference}%")
 
             if percentage_difference <= 3:
                 self.logger.debug("Metrics ingested within 3%")
@@ -545,7 +550,7 @@ class MetricsDataIsValid(Check):
 
         from_minutes_ago = 15
         to_minutes_ago = 10
-        from_timestamp, to_timestamp = get_epoch_start_and_end_times(
+        date_filter, from_timestamp, to_timestamp = get_epoch_start_and_end_times(
             from_minutes_ago, to_minutes_ago
         )
 
