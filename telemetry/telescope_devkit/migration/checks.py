@@ -38,7 +38,7 @@ def get_migration_checklist_logger():
 
 def get_epoch_start_and_end_times(from_minutes_ago=15, to_minutes_ago=10):
     now = datetime.datetime.now()
-    date_filter = now.strftime('%Y-%m-%d')
+    date_filter = now.strftime("%Y-%m-%d")
     from_timestamp = int(
         (now - datetime.timedelta(minutes=from_minutes_ago)).timestamp()
     )
@@ -408,9 +408,9 @@ class ClickhouseMetricsChecks(Check):
         webops_account_name = str(self.sts.account_name).replace("mdtp-", "webops-")
         clickhouse_query = (
             f'echo "SELECT COUNT(*) '
-            f'FROM graphite.graphite_distributed '
-            f'WHERE (Date = toDate(\'{date_filter}\')) '
-            f'AND (Time > {start_time})'
+            f"FROM graphite.graphite_distributed "
+            f"WHERE (Date = toDate('{date_filter}')) "
+            f"AND (Time > {start_time})"
             f'AND (Time < {end_time})" | clickhouse client '
         )
 

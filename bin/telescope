@@ -20,8 +20,9 @@ aws_path=${AWS_CONFIG_PATH:-$HOME/.aws}
 docker_image_name="mdtp-telemetry/telescope-devkit:latest"
 docker_aws_env_vars="-e AWS_DEFAULT_REGION=${AWS_REGION} -e AWS_REGION=${AWS_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}"
 dev_mode=${TELESCOPE_DEVKIT_DEVMODE:-false}
+docker_mode=${TELESCOPE_DEVKIT_DOCKER_MODE:-true}
 # shellcheck disable=SC2054
-default_env_vars=(--env TELESCOPE_DEVKIT_DOCKER_MODE=True)
+default_env_vars=(--env TELESCOPE_DEVKIT_DOCKER_MODE=${docker_mode})
 # shellcheck disable=SC2054
 default_bind_mounts=(--mount type=bind,source="${ssh_path}",target=/root/.ssh_host --mount type=bind,source="${aws_path}",target=/root/.aws)
 # shellcheck disable=SC2054
