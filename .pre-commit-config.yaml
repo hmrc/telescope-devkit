@@ -14,7 +14,7 @@ repos:
       - id: end-of-file-fixer
         exclude: repository.yaml
   - repo: https://github.com/hmrc/security-git-hooks
-    rev: release/1.8.0
+    rev: release/1.9.0
     hooks:
       - id: secrets_filecontent
         name: Checking staged files for sensitive content
@@ -25,7 +25,7 @@ repos:
         exclude: ".tar$|.gz$|.jar$|.7z$|.rar$|.bz2$|.zip$|.gzip$|.war$|.ear$|.xlsx$|.xls$|
                   |.docx$|.doc$|.pptx$|.pdf$|.jpg$|.png$|.jpeg$|.tif$|.tiff$|.gif$|.bmp$|.webp$|.svg$|.ico$|.psd$|.exe$|.dll$|.dmg$|.de$|.rpm$"
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.0.1
+    rev: v3.1.0
     hooks:
       - id: reorder-python-imports
         name: Re-order Python imports

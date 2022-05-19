@@ -1,8 +1,9 @@
 [tool.poetry]
 name = "telescope-devkit"
 version = "0.1.0"
-description = ""
-authors = ["Vítor Brandão <109226+vitorbrandao@users.noreply.github.com>"]
+description = "Software Development Kit for Telemetry Engineers"
+readme = "README.md"
+authors = ["Team Telemetry <telemetry@digital.hmrc.gov.uk>"]
 maintainers = ["Team Telemetry"]
 packages = [
   { include = "telemetry" }
