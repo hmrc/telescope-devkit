@@ -27,5 +27,5 @@ for lg in /aws/ecs/containerinsights/protected-mdtp/performance \
 do
   FILTER_NAME="$(echo $lg | awk -F'/' '{print $NF}')-log-handler-lambda-subscription"
   echo "$lg $FILTER_NAME"
-  aws-profile -p webops-integration-engineer-RoleTelemetryEngineer aws logs delete-subscription-filter --log-group-name "$lg" --filter-name "$FILTER_NAME"
+  aws-profile -p webops-integration-engineer-RoleTelemetryAdministrator aws logs delete-subscription-filter --log-group-name "$lg" --filter-name "$FILTER_NAME"
 done;
