@@ -48,7 +48,7 @@ class Sts(object):
             else None
         )
 
-    def start_webops_telemetry_engineer_role_session(self) -> Session:
+    def start_webops_platform_deity_role_session(self) -> Session:
         profile = (
             f"webops-{self.webops_account_name}-RoleInterimPlatformDeity"
         )

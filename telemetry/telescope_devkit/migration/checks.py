@@ -424,7 +424,7 @@ class ClickhouseMetricsChecks(Check):
             return
 
         # Get metric count from WebOps environment
-        webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+        webops_ec2 = Ec2(self.sts.start_webops_platform_deity_role_session())
         webops_metric_count = self._get_metric_ingest_count(
             webops_ec2, clickhouse_query, webops_account_name
         )
@@ -486,7 +486,7 @@ class ClickhouseSnapshotGeneration(Check):
 
         try:
             # Create snapshots in WebOps for both shards 1 & 2
-            webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+            webops_ec2 = Ec2(self.sts.start_webops_platform_deity_role_session())
             shard_1_snapshot = self._generate_snapshot(
                 webops_ec2, webops_account_name, "clickhouse-server-shard_1"
             )
@@ -653,7 +653,7 @@ class WebopsEc2InstancesHaveBeenDecommissioned(Check):
     def check(self):
         self.logger.info(f"Check: {self._description}")
 
-        webops_ec2 = Ec2(self.sts.start_webops_telemetry_engineer_role_session())
+        webops_ec2 = Ec2(self.sts.start_webops_platform_deity_role_session())
         instance_names = [
             "clickhouse-server-shard_1",
             "clickhouse-server-shard_2",
