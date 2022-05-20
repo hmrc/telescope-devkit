@@ -50,7 +50,7 @@ class Sts(object):
 
     def start_webops_telemetry_engineer_role_session(self) -> Session:
         profile = (
-            f"webops-{self.webops_account_name}-engineer-RoleTelemetryReadOnlyEngineer"
+            f"webops-{self.webops_account_name}-RoleInterimPlatformDeity"
         )
 
         return Session(profile_name=profile)
