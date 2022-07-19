@@ -1,8 +1,10 @@
+.vscode
 *.log
 project/project
 project/target
 target
 lib_managed
+tools/all-the-buckets.csv
 tmp
 .history
 dist
