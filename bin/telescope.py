@@ -40,7 +40,13 @@ commands = {
 
 
 def is_running_in_docker() -> bool:
-    docker_mode = os.getenv("TELESCOPE_DEVKIT_DOCKER_MODE", 'False').lower() in ('true', '1', 't', 'y', 'yes')
+    docker_mode = os.getenv("TELESCOPE_DEVKIT_DOCKER_MODE", "False").lower() in (
+        "true",
+        "1",
+        "t",
+        "y",
+        "yes",
+    )
     if docker_mode:
         return True
 

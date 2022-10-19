@@ -1,6 +1,6 @@
 # Extra tools
 
-## `all-the-buckets.sh` 
+## `all-the-buckets.sh`
 
 Lists all the S3 buckets provisioned in the Telemetry accounts. Output is in CSV format, ready to be exported to a file and imported into a Google Spreadsheet.
 
@@ -20,4 +20,4 @@ It generates random passwords. Default password length is 32 characters.
 
 ## `yaml-expand.sh`
 
-Resolves and expands anchors and aliases in YAML files which some may find useful for debugging. 
+Resolves and expands anchors and aliases in YAML files which some may find useful for debugging.
