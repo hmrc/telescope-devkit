@@ -49,9 +49,7 @@ class Sts(object):
         )
 
     def start_webops_platform_deity_role_session(self) -> Session:
-        profile = (
-            f"webops-{self.webops_account_name}-RoleInterimPlatformDeity"
-        )
+        profile = f"webops-{self.webops_account_name}-RoleInterimPlatformDeity"
 
         return Session(profile_name=profile)
 
