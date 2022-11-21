@@ -45,6 +45,7 @@ do
       git checkout -b "${JIRA_TICKET}-${JIRA_SUFFIX}" && \
       cruft update --skip-apply-ask && \
       cruft diff | git apply --allow-empty && \
+      poetry update && \
       git add . && \
       pre-commit run --all-files && \
       git commit --no-verify --message="${JIRA_TICKET}: update lambda templates" --message="${CO_AUTHOR}" && \
