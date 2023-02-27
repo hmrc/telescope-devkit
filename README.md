@@ -1,3 +1,7 @@
+> **Note:**
+This repository is archived, and its useful scripts have been moved to the 
+> [telemetry repository](https://github.com/hmrc/telemetry/tree/main/tools).
+
 # telescope-devkit
 
 [![Brought to you by Telemetry Team](https://img.shields.io/badge/MDTP-Telemetry-40D9C0?style=flat&labelColor=000000&logo=gov.uk)](https://confluence.tools.tax.service.gov.uk/display/TEL/Telemetry)
