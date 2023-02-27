@@ -1,3 +1,8 @@
+> **Note:**
+This repository is archived, and these tools have been moved to the
+> [telemetry repository](https://github.com/hmrc/telemetry/tree/main/tools).
+
+
 # Extra tools
 
 ## `all-the-buckets.sh`
